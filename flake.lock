@@ -125,11 +125,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1715803345,
-        "narHash": "sha256-7LDUl+hI+fpwVPEnstR9ZHHrUqLvzt1RFiGTxoKcgnA=",
+        "lastModified": 1715803845,
+        "narHash": "sha256-Th+IJ2CWreGlmgYgmkGMH0JLuraTg9ceWb9KqjUdOMA=",
         "owner": "thinnerthinker",
         "repo": "tomers",
-        "rev": "409596f1fadaca53b60a97a1fc55c717c8d0629d",
+        "rev": "d7cadcbf81af16e9ced180a5e9eb957babe7c70b",
         "type": "github"
       },
       "original": {
