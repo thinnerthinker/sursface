@@ -7,7 +7,11 @@ Sursface is a cross-platform rendering library designed to simplify the developm
 - **Cross-Platform Support**: Compile and run on various platforms including Linux, Windows, and MacOS (untested).
 - **WASM Support**: Automatically generate JavaScript bindings for the `wasm32-unknown` Nix target, enabling web-based applications.
 
-## Getting Started
+## Releases
+
+New releases are automatically built by a pipeline on every push to `main`. These can be directly downloaded, unzipped, and executed, without any installation process.
+
+## Building Sursface
 
 ### Prerequisites
 
