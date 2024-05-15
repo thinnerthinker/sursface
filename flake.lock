@@ -3,6 +3,7 @@
     "crane": {
       "inputs": {
         "nixpkgs": [
+          "tomers",
           "nixpkgs"
         ]
       },
@@ -23,6 +24,7 @@
     "fenix": {
       "inputs": {
         "nixpkgs": [
+          "tomers",
           "nixpkgs"
         ],
         "rust-analyzer-src": "rust-analyzer-src"
@@ -77,10 +79,8 @@
     },
     "root": {
       "inputs": {
-        "crane": "crane",
-        "fenix": "fenix",
-        "flake-utils": "flake-utils",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "tomers": "tomers"
       }
     },
     "rust-analyzer-src": {
@@ -112,6 +112,29 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
+        "type": "github"
+      }
+    },
+    "tomers": {
+      "inputs": {
+        "crane": "crane",
+        "fenix": "fenix",
+        "flake-utils": "flake-utils",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1715803345,
+        "narHash": "sha256-7LDUl+hI+fpwVPEnstR9ZHHrUqLvzt1RFiGTxoKcgnA=",
+        "owner": "thinnerthinker",
+        "repo": "tomers",
+        "rev": "409596f1fadaca53b60a97a1fc55c717c8d0629d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "thinnerthinker",
+        "repo": "tomers",
         "type": "github"
       }
     }
