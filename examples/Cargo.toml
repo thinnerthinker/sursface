@@ -1,0 +1,17 @@
+[package]
+name = "sursface_examples"
+version = "0.1.0"
+edition = "2021"
+description = "Common example code"
+
+[lib]
+name = "hello_window"
+path = "src/hello_window/lib.rs"
+crate-type = ["cdylib"]
+
+[[bin]]
+name = "hello_window"
+path = "src/hello_window/main.rs"
+
+[dependencies]
+sursface = { path = "../sursface" }

@@ -1,0 +1,12 @@
+[workspace]
+members = [
+    "sursface",
+    "examples",
+]
+resolver = "2"
+
+[workspace.metadata.crane]
+name = "sursface"
+
+[workspace.package]
+version = "0.1.0"

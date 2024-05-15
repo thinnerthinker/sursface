@@ -1,0 +1,20 @@
+[package]
+name = "sursface"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "sursface"
+path = "src/lib.rs"
+
+[dependencies]
+console_error_panic_hook = "0.1.7"
+env_logger = "0.11.3"
+log = "0.4.21"
+pollster = "0.3.0"
+wasm-bindgen = "0.2.92"
+getrandom = { version = "0.2.15", features = ["js"] }
+wgpu = { version = "0.20.0", features = ["webgl"] }
+winit = "0.30.0"
+fern = "0.6.2"
+console_log = "1.0.0"
