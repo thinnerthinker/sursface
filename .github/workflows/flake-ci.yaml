@@ -36,7 +36,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           draft: false
           prerelease: false
-          body: "This release contains only pre-built binary assets."
 
   build:
     name: Build Binaries
