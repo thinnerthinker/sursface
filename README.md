@@ -22,7 +22,7 @@ To compile Sursface, ensure you have the following tools installed: Rust, Cargo,
 Clone the repository:
 
 ```sh
-git clone https://github.com/thinnerthinkeer/sursface.git
+git clone https://github.com/thinnerthinker/sursface.git
 cd sursface
 ```
 
