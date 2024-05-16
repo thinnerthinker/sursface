@@ -18,3 +18,4 @@ wgpu = { version = "0.20.0", features = ["webgl"] }
 winit = "0.30.0"
 fern = "0.6.2"
 console_log = "1.0.0"
+wasm-bindgen-futures = "0.4.42"
