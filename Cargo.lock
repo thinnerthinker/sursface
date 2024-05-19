@@ -1431,6 +1431,8 @@ dependencies = [
 name = "sursface_examples"
 version = "0.1.0"
 dependencies = [
+ "env_logger",
+ "log",
  "sursface",
 ]
 

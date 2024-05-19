@@ -1,16 +1,40 @@
-use sursface::{app::App, wgpu};
+use sursface::{app::{App, State}, wgpu};
+use std::any::Any;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
     use sursface::winit::dpi::PhysicalSize;
-    sursface::start::create_window_desktop(PhysicalSize::new(1280, 720), render);
+    env_logger::init();
+    log::info!("Starting application");
+    sursface::start::create_window_desktop(PhysicalSize::new(1280, 720), init, render);
 }
 
-fn render<'a>(app: &mut App<'a>) {
-    let _ = clear_screen(app, sursface::wgpu::Color { r: 100f64 / 255f64, g: 149f64 / 255f64, b: 237f64 / 255f64, a: 255f64 / 255f64 });
+#[cfg(target_arch = "wasm32")]
+fn main() {}
+
+#[derive(Clone)]
+struct EmptyState {}
+impl State for EmptyState {}
+
+fn init<'a>(app: &mut App<'a>) -> Box<dyn State> {
+    log::info!("Initializing state");
+    Box::new(EmptyState {})
 }
 
-fn clear_screen<'a>(app: &mut App<'a>, color: sursface::wgpu::Color) -> Result<(), wgpu::SurfaceError> {
+fn render<'a>(app: &mut App<'a>, _state: &mut Box<dyn State>) {
+    log::error!("hhhhom");
+    let output = clear_screen(app, wgpu::Color {
+        r: 100.0 / 255.0,
+        g: 149.0 / 255.0,
+        b: 237.0 / 255.0,
+        a: 1.0,
+    }).unwrap();
+    let _ = present(app, output);
+}
+
+
+fn clear_screen<'a>(app: &mut App<'a>, color: sursface::wgpu::Color) -> Result<wgpu::SurfaceTexture, wgpu::SurfaceError> {
+    log::info!("gaspar");
     let display = app.display.as_ref().unwrap();
     let output = display.surface.get_current_texture()?;
         let view = output
@@ -39,9 +63,13 @@ fn clear_screen<'a>(app: &mut App<'a>, color: sursface::wgpu::Color) -> Result<(
         }
 
         display.queue.submit(std::iter::once(encoder.finish()));
-        output.present();
 
-        Ok(())
+        Ok(output)
+}
+
+fn present<'a>(app: &mut App<'a>, output: sursface::wgpu::SurfaceTexture) -> Result<(), wgpu::SurfaceError> {
+    output.present();
+    Ok(())
 }
 
 #[cfg(target_arch = "wasm32")]
