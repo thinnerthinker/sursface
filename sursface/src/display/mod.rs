@@ -1,4 +1,4 @@
-use std::{sync::Arc, iter};
+use std::sync::Arc;
 
 use winit::{
     event_loop::ActiveEventLoop, 
@@ -132,42 +132,6 @@ impl<'a> Display<'a> {
     fn update(&mut self) {}
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
-        let output = self.surface.get_current_texture()?;
-        let view = output
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
-
-        let mut encoder = self
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("Render Encoder"),
-            });
-
-        {
-            let _render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Render Pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &view,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 100.0 / 255.0,
-                            g: 149.0 / 255.0,
-                            b: 237.0 / 255.0,
-                            a: 1.0,
-                        }),
-                        store: wgpu::StoreOp::Store,
-                    },
-                })],
-                depth_stencil_attachment: None,
-                occlusion_query_set: None,
-                timestamp_writes: None,
-            });
-        }
-
-        self.queue.submit(iter::once(encoder.finish()));
-        output.present();
-
         Ok(())
     }
 }

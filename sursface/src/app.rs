@@ -1,32 +1,32 @@
 use std::panic;
-
+use std::sync::{Arc, Mutex};
 use winit::application::ApplicationHandler;
-use winit::dpi::{PhysicalSize};
+use winit::dpi::PhysicalSize;
 use winit::event::{ElementState, KeyEvent, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::WindowId;
 
-use std::sync::{Arc,RwLock};
-
 #[cfg(target_arch = "wasm32")]
 extern crate console_error_panic_hook;
 
-use super::display::{Display};
+use super::display::Display;
 
 #[derive(Default)]
 pub struct App<'a> {
-    display: Option<Display<'a>>,
-    initial_size: PhysicalSize<u32>,
+    pub display: Option<Display<'a>>,
+    pub initial_size: PhysicalSize<u32>,
     #[cfg(target_arch = "wasm32")]
-    canvas: Option<wgpu::web_sys::HtmlCanvasElement>,
+    pub canvas: Option<wgpu::web_sys::HtmlCanvasElement>,
+    pub render: Option<Box<dyn Fn(&mut App<'a>) + 'a>>,
 }
+
 
 impl<'a> App<'a> {
     pub fn from_window_size(size: PhysicalSize<u32>) -> Self {
         log::info!("setting size");
 
-        App { 
+        App {
             initial_size: size,
             ..Default::default()
         }
@@ -41,6 +41,13 @@ impl<'a> App<'a> {
             canvas: Some(canvas),
             ..Default::default()
         }
+    }
+
+    pub fn set_render_function<F>(&mut self, render_func: F)
+    where
+        F: Fn(&mut App<'a>) + 'a,
+    {
+        self.render = Some(Box::new(render_func));
     }
 }
 
@@ -79,22 +86,28 @@ impl<'a> ApplicationHandler for App<'a> {
                 self.display.as_mut().unwrap().resize(physical_size);
             }
             WindowEvent::RedrawRequested => {
-                let display = self.display.as_mut().unwrap();
-                display.window.request_redraw();
+                if let Some(display) = self.display.as_mut() {
+                    display.window.request_redraw();
 
-                match display.render() {
-                    Ok(_) => {}
-                    Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                        display.resize(display.size)
+                    match display.render() {
+                        Ok(_) => {}
+                        Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
+                            display.resize(display.size)
+                        }
+                        Err(wgpu::SurfaceError::OutOfMemory) => {
+                            log::error!("OutOfMemory");
+                            event_loop.exit();
+                        }
+                        Err(wgpu::SurfaceError::Timeout) => {
+                            log::warn!("Surface timeout")
+                        }
                     }
-                    Err(wgpu::SurfaceError::OutOfMemory) => {
-                        log::error!("OutOfMemory");
-                        event_loop.exit();
-                    }
-                    Err(wgpu::SurfaceError::Timeout) => {
-                        log::warn!("Surface timeout")
-                    }
-                };
+                }
+
+                if let Some(render) = self.render.take() {
+                    render(self);
+                    self.render = Some(render);
+                }
             }
             _ => (),
         }
