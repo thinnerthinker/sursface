@@ -4,11 +4,6 @@ version = "0.1.0"
 edition = "2021"
 description = "Common example code"
 
-[lib]
-name = "hello_window"
-path = "src/hello_window/lib.rs"
-crate-type = ["cdylib"]
-
 [[bin]]
 name = "hello_window"
 path = "src/hello_window/main.rs"
@@ -17,7 +12,9 @@ path = "src/hello_window/main.rs"
 name = "hello_triangle"
 path = "src/hello_triangle/main.rs"
 
+
 [dependencies]
 env_logger = "0.11.3"
 log = "0.4.21"
 sursface = { path = "../sursface" }
+wasm-bindgen = "0.2.92"

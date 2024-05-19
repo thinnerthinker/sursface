@@ -12,7 +12,7 @@ extern crate console_error_panic_hook;
 
 use super::display::Display;
 
-pub trait State: Any + Send + Sync {}
+pub trait State {}
 
 #[derive(Default)]
 pub struct App<'a> {
@@ -62,6 +62,7 @@ fn init_logger() {
 }
 
 impl<'a> App<'a> {
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn from_window_size(size: PhysicalSize<u32>) -> Self {
         log::info!("Setting window size");
         App {

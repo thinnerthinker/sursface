@@ -1,5 +1,7 @@
 use sursface::{app::{App, State}, wgpu};
 use std::any::Any;
+#[cfg(target_arch = "wasm32")]
+use sursface::wasm_bindgen;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
@@ -9,19 +11,30 @@ fn main() {
     sursface::start::create_window_desktop(PhysicalSize::new(1280, 720), init, render);
 }
 
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen::prelude::wasm_bindgen]
+pub fn start_browser(canvas: sursface::wgpu::web_sys::HtmlCanvasElement) {
+    use sursface::{start, wasm_bindgen};
+    start::create_window_browser(canvas, init, render);
+}
+
 #[cfg(target_arch = "wasm32")]
 fn main() {}
+
 
 #[derive(Clone)]
 struct EmptyState {}
 impl State for EmptyState {}
 
-fn init<'a>(app: &mut App<'a>) -> Box<dyn State> {
+
+
+pub fn init<'a>(app: &mut App<'a>) -> Box<dyn State> {
     log::info!("Initializing state");
     Box::new(EmptyState {})
 }
 
-fn render<'a>(app: &mut App<'a>, _state: &mut Box<dyn State>) {
+pub fn render<'a>(app: &mut App<'a>, _state: &mut Box<dyn State>) {
     log::error!("hhhhom");
     let output = clear_screen(app, wgpu::Color {
         r: 100.0 / 255.0,
@@ -71,6 +84,3 @@ fn present<'a>(app: &mut App<'a>, output: sursface::wgpu::SurfaceTexture) -> Res
     output.present();
     Ok(())
 }
-
-#[cfg(target_arch = "wasm32")]
-fn main() {}

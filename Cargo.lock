@@ -1434,6 +1434,7 @@ dependencies = [
  "env_logger",
  "log",
  "sursface",
+ "wasm-bindgen",
 ]
 
 [[package]]

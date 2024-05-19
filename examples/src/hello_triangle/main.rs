@@ -1,13 +1,23 @@
-use std::any::Any;
-use std::borrow::Cow;
-use std::sync::{Arc, Mutex};
-use sursface::app::{App, State};
-use sursface::wgpu::{self, Color, CommandEncoder, RenderPipeline, ShaderModule, SurfaceTexture, TextureFormat, TextureView};
+use sursface::{app::{App, State}, wgpu::{self, Color, CommandEncoder, RenderPipeline, ShaderModule, SurfaceTexture, TextureFormat, TextureView}};
 
-// Define the State trait
+#[cfg(not(target_arch = "wasm32"))]
+fn main() {
+    use sursface::winit::dpi::PhysicalSize;
+    sursface::start::create_window_desktop(PhysicalSize::new(1280, 720), init, render);
+}
+
+#[cfg(target_arch = "wasm32")]
+fn main() {}
 
 
-// Implement State for TriangleState
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen::prelude::wasm_bindgen]
+pub fn start_browser(canvas: sursface::wgpu::web_sys::HtmlCanvasElement) {
+    use sursface::{start, wasm_bindgen};
+
+    start::create_window_browser(canvas, init, render);
+}
+
 struct TriangleState {
     render_pipeline: RenderPipeline,
     shader: ShaderModule,
@@ -39,13 +49,17 @@ impl TriangleState {
     }
 }
 
+
+
 fn init(app: &mut App) -> Box<dyn State> {
+    use std::borrow::Cow;
+    
     let display = app.display.as_ref().unwrap();
     let device = &display.device;
 
     let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
         label: None,
-        source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("shader.wgsl"))),
+        source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("assets/shader.wgsl"))),
     });
 
     let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
@@ -192,12 +206,3 @@ pub fn draw_triangle<'a>(
 fn present(output: SurfaceTexture) {
     output.present();
 }
-
-#[cfg(not(target_arch = "wasm32"))]
-fn main() {
-    use sursface::winit::dpi::PhysicalSize;
-    sursface::start::create_window_desktop(PhysicalSize::new(1280, 720), init, render);
-}
-
-#[cfg(target_arch = "wasm32")]
-fn main() {}

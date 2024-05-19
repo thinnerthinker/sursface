@@ -1,11 +1,5 @@
-use std::panic;
-use std::sync::{Arc, Mutex};
-use winit::application::ApplicationHandler;
-use winit::dpi::PhysicalSize;
-use winit::event::{ElementState, KeyEvent, WindowEvent};
-use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
-use winit::keyboard::{KeyCode, PhysicalKey};
-use winit::window::WindowId;
+use winit::event_loop::{ControlFlow, EventLoop};
+use wgpu::web_sys::HtmlCanvasElement;
 
 use crate::app::App;
 
@@ -15,7 +9,6 @@ use pollster;
 #[cfg(target_arch = "wasm32")]
 extern crate console_error_panic_hook;
 
-use super::display::Display;
 use crate::app::State;
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -42,14 +35,15 @@ pub fn create_window_desktop<'a>(
 #[cfg(target_arch = "wasm32")]
 pub fn create_window_browser<'a>(
     canvas: HtmlCanvasElement, 
-    init: fn(&mut App) -> Box<dyn State + 'a>, 
-    render: fn(&mut App, Box<dyn State + 'a>)
+    init: fn(&mut App) -> Box<dyn State + 'static>, 
+    render: fn(&mut App, &mut Box<dyn State + 'static>)
 ) {
     use crate::app::App;
 
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);
     let mut app = App::from_canvas(canvas);
+
     app.set_init_function(init);
     app.set_render_function(render);
 
