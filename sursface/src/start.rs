@@ -27,7 +27,6 @@ pub fn create_window_desktop<'a>(
     log::error!("megbuilt");
     app.set_init_function(init);
     app.set_render_function(render);
-    log::error!("ayayyayay");
 
     event_loop.run_app(&mut app).unwrap();
 }

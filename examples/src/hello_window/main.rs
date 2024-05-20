@@ -6,7 +6,6 @@ use sursface::wasm_bindgen;
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
     use sursface::winit::dpi::PhysicalSize;
-    env_logger::init();
     log::error!("Starting application");
     sursface::start::create_window_desktop(PhysicalSize::new(1280, 720), init, render);
 }
