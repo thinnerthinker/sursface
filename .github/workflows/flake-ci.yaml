@@ -59,6 +59,9 @@ jobs:
         with:
           nix_path: nixpkgs=channel=nixos-23.11
 
+      - name: Use Cachix
+        run: cachix use thinnerthinker
+
       - name: Build Package
         run: |
           nix build .#${{ matrix.target }}

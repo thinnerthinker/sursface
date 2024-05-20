@@ -24,7 +24,6 @@ pub fn create_window_desktop<'a>(
     event_loop.set_control_flow(ControlFlow::Poll);
     let mut app = App::from_window_size(window_size);
     
-    log::error!("megbuilt");
     app.set_init_function(init);
     app.set_render_function(render);
 
