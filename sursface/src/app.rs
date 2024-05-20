@@ -98,7 +98,7 @@ impl<'a> App<'a> {
 
 impl<'a> ApplicationHandler for App<'a> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        init_logger()
+        init_logger();
         #[cfg(not(target_arch = "wasm32"))]
         {
             self.display = Some(Display::from_window_size(event_loop, self.initial_size));
