@@ -18,7 +18,20 @@
           {
             system = "x86_64-unknown-linux-gnu";
             arch = "x86_64-linux";
-            depsBuild = with pkgs; [ patchelf ];
+            depsBuild = with pkgs; [
+              patchelf
+              libxkbcommon
+              wayland
+              xorg.libX11
+              xorg.libXrandr
+              xorg.libXrender
+              xorg.libXcursor
+              xorg.libxcb
+              xorg.libXi
+
+              libGL
+              vulkan-loader
+            ];
             postInstall = crateName: ''
                 find $out -type f -exec sh -c '
                 if file "$1" | grep -q "ELF .* executable"; then
@@ -50,7 +63,7 @@
               mingwW64.stdenv.cc
               mingwW64.windows.pthreads
             ];
-            buildFiles = [ "src/hello_triangle/assets"  ];
+            buildFiles = [ "src/hello_triangle/assets" ];
             env = {
               # fixes issues related to libring
               TARGET_CC = with pkgs.pkgsCross; "${mingwW64.stdenv.cc}/bin/${mingwW64.stdenv.cc.targetPrefix}cc";
@@ -69,7 +82,7 @@
               mkdir $out/bindgen
               find $out/bin -type f -name "*.wasm" -exec wasm-bindgen {} --out-dir $out/bindgen --web \;
             '';
-            buildFiles = [ "src/hello_triangle/assets"  ];
+            buildFiles = [ "src/hello_triangle/assets" ];
             env = {
               packages = with pkgs; [ wasm-bindgen-cli ];
             };
