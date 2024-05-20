@@ -6,7 +6,6 @@ use sursface::wasm_bindgen;
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
     use sursface::winit::dpi::PhysicalSize;
-    log::error!("Starting application");
     sursface::start::create_window_desktop(PhysicalSize::new(1280, 720), init, render);
 }
 
@@ -29,12 +28,10 @@ impl State for EmptyState {}
 
 
 pub fn init<'a>(app: &mut App<'a>) -> Box<dyn State> {
-    log::info!("Initializing state");
     Box::new(EmptyState {})
 }
 
 pub fn render<'a>(app: &mut App<'a>, _state: &mut Box<dyn State>) {
-    log::error!("hhhhom");
     let output = clear_screen(app, wgpu::Color {
         r: 100.0 / 255.0,
         g: 149.0 / 255.0,
@@ -46,7 +43,6 @@ pub fn render<'a>(app: &mut App<'a>, _state: &mut Box<dyn State>) {
 
 
 fn clear_screen<'a>(app: &mut App<'a>, color: sursface::wgpu::Color) -> Result<wgpu::SurfaceTexture, wgpu::SurfaceError> {
-    log::info!("gaspar");
     let display = app.display.as_ref().unwrap();
     let output = display.surface.get_current_texture()?;
         let view = output

@@ -98,7 +98,7 @@ impl<'a> App<'a> {
 
 impl<'a> ApplicationHandler for App<'a> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        init_logger();
+        init_logger()
         #[cfg(not(target_arch = "wasm32"))]
         {
             self.display = Some(Display::from_window_size(event_loop, self.initial_size));
@@ -112,12 +112,10 @@ impl<'a> ApplicationHandler for App<'a> {
             }
         }
 
-        log::error!("buzicomant");
         if let Some(init) = self.init.take() {
             self.state = Some(Arc::new(Mutex::new(init(self))));
             self.init = Some(init);
         }
-        log::error!("resumed");
     }
 
     fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
@@ -150,14 +148,11 @@ impl<'a> ApplicationHandler for App<'a> {
                 log::error!("Before rendering");
 
                 if let Some(render) = self.render.take() {
-                    // Lock the state, clone it, and then release the lock
                     log::error!("Locking state");
                     let state_arc = Arc::clone(self.state.as_ref().unwrap());
                     let mut state_lock = state_arc.lock().unwrap();
                     log::error!("State locked");
 
-                    // Pass a reference to the render function
-                    log::error!("render");
                     render(self, &mut *state_lock);
                 }
 
