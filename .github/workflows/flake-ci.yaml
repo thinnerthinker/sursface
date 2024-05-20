@@ -59,6 +59,9 @@ jobs:
         with:
           nix_path: nixpkgs=channel=nixos-23.11
 
+      - name: Install Cachix
+        run: nix-env -iA cachix -f https://cachix.org/api/v1/install
+
       - name: Use Cachix
         run: cachix use thinnerthinker
 
