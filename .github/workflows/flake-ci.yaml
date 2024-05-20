@@ -71,15 +71,15 @@ jobs:
           mkdir -p output
           zip -r output/sursface-${{ matrix.target }}.zip result/*
 
-      - name: Authenticate with Cachix
-        run: cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}
-
-      - name: Push to Cachix
-        run: nix path-info --all | cachix push thinnerthinker
-
       - name: Upload to Release
         uses: AButler/upload-release-assets@v3.0
         with:
           files: "output/sursface-${{ matrix.target }}.zip"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           release-id: ${{ needs.initialize_release.outputs.release_id }}
+
+      - name: Authenticate with Cachix
+        run: cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      - name: Push to Cachix
+        run: nix path-info --all | cachix push thinnerthinker
