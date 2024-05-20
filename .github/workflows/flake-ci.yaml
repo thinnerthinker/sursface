@@ -69,8 +69,13 @@ jobs:
         run: |
           nix build .#${{ matrix.target }}
           mkdir -p output
-
           zip -r output/sursface-${{ matrix.target }}.zip result/*
+
+      - name: Authenticate with Cachix
+        run: cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      - name: Push to Cachix
+        run: nix path-info --all | cachix push thinnerthinker
 
       - name: Upload to Release
         uses: AButler/upload-release-assets@v3.0
