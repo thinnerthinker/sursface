@@ -108,7 +108,7 @@ impl<'a> ApplicationHandler for App<'a> {
             if let Some(canvas) = self.canvas.clone() {
                 self.display = Some(Display::from_canvas(event_loop, canvas));
             } else {
-                log::error!("Canvas is not set");
+                log::info!("Canvas is not set");
             }
         }
 
@@ -144,19 +144,21 @@ impl<'a> ApplicationHandler for App<'a> {
                 }
             }
             WindowEvent::RedrawRequested => {
-                log::error!("Redraw requested");
-                log::error!("Before rendering");
-
                 if let Some(render) = self.render.take() {
-                    log::error!("Locking state");
+                    log::info!("Locking state");
                     let state_arc = Arc::clone(self.state.as_ref().unwrap());
                     let mut state_lock = state_arc.lock().unwrap();
-                    log::error!("State locked");
+                    log::info!("State locked");
 
+                    log::info!("rendering");
                     render(self, &mut *state_lock);
+
+                    self.render = Some(render);
                 }
 
-                log::error!("After rendering");
+                if let Some(display) = self.display.as_mut() {
+                    display.window.as_ref().request_redraw();
+                }
             }
             _ => (),
         }
