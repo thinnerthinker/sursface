@@ -1,4 +1,5 @@
 use std::time::Instant;
+use cube::{Uniforms, INDICES, VERTICES};
 use sursface::wgpu::Buffer;
 use sursface::{app::App, wgpu};
 use wgpu::{util::DeviceExt, Color, CommandEncoder, RenderPipeline, ShaderModule, SurfaceTexture, TextureFormat, TextureView};
@@ -6,48 +7,14 @@ use cgmath::{Deg, Matrix4, Point3, Rad, Vector3, perspective};
 use cgmath::SquareMatrix;
 use bytemuck::{Pod, Zeroable};
 use sursface::app::State;
+use image::GenericImageView;
 
-#[repr(C)]
-#[derive(Copy, Clone, Pod, Zeroable)]
-struct Uniforms {
-    model_view_proj: [[f32; 4]; 4],
-}
+use crate::cube::Vertex;
 
-impl From<Matrix4<f32>> for Uniforms {
-    fn from(m: Matrix4<f32>) -> Self {
-        Uniforms {
-            model_view_proj: m.into(),
-        }
-    }
-}
+mod cube;
 
-#[repr(C)]
-#[derive(Copy, Clone, Pod, Zeroable)]
-struct Vertex {
-    position: [f32; 3],
-    color: [f32; 3],
-}
-
-const VERTICES: &[Vertex] = &[
-    Vertex { position: [-1.0, -1.0,  1.0], color: [1.0, 0.0, 0.0] },
-    Vertex { position: [ 1.0, -1.0,  1.0], color: [0.0, 1.0, 0.0] },
-    Vertex { position: [ 1.0,  1.0,  1.0], color: [0.0, 0.0, 1.0] },
-    Vertex { position: [-1.0,  1.0,  1.0], color: [1.0, 1.0, 0.0] },
-    
-    Vertex { position: [-1.0, -1.0, -1.0], color: [1.0, 0.0, 1.0] },
-    Vertex { position: [ 1.0, -1.0, -1.0], color: [0.0, 1.0, 1.0] },
-    Vertex { position: [ 1.0,  1.0, -1.0], color: [1.0, 1.0, 1.0] },
-    Vertex { position: [-1.0,  1.0, -1.0], color: [0.0, 0.0, 0.0] },
-];
-
-const INDICES: &[u16] = &[
-    0, 1, 2,  2, 3, 0,
-    4, 6, 5,  6, 4, 7,
-    3, 2, 6,  6, 7, 3,
-    0, 5, 1,  5, 0, 4,
-    1, 6, 2,  6, 1, 5,
-    0, 3, 7,  7, 4, 0,
-];
+#[cfg(target_arch = "wasm32")]
+use sursface::wasm_bindgen;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
@@ -55,8 +22,6 @@ fn main() {
     sursface::start::create_window_desktop(PhysicalSize::new(1280, 720), init, render);
 }
 
-#[cfg(target_arch = "wasm32")]
-fn main() {}
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen::prelude::wasm_bindgen]
@@ -65,6 +30,8 @@ pub fn start_browser(canvas: sursface::wgpu::web_sys::HtmlCanvasElement) {
     start::create_window_browser(canvas, init, render);
 }
 
+#[cfg(target_arch = "wasm32")]
+fn main() {}
 struct CubeState {
     render_pipeline: RenderPipeline,
     shader: ShaderModule,
@@ -77,6 +44,8 @@ struct CubeState {
     vertex_buffer: Buffer,
     index_buffer: Buffer,
     num_indices: u32,
+    texture_bind_group: wgpu::BindGroup,
+    texture: wgpu::Texture,
 }
 
 impl State for CubeState {}
@@ -88,8 +57,94 @@ impl CubeState {
         pipeline_layout: wgpu::PipelineLayout,
         format: TextureFormat,
         device: &wgpu::Device,
+        queue: &wgpu::Queue,
     ) -> Self {
         let start_time = Instant::now();
+
+        let img = image::open("examples/src/cube_and_inputs/assets/dice.png").unwrap();
+        let rgba = img.to_rgba8();
+        let dimensions = img.dimensions();
+
+        let texture_extent = wgpu::Extent3d {
+            width: dimensions.0,
+            height: dimensions.1,
+            depth_or_array_layers: 1,
+        };
+
+        let texture = device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("Texture"),
+            size: texture_extent,
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Rgba8UnormSrgb,
+            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+            view_formats: &[],
+        });
+
+        queue.write_texture(
+            wgpu::ImageCopyTexture {
+                texture: &texture,
+                mip_level: 0,
+                origin: wgpu::Origin3d::ZERO,
+                aspect: wgpu::TextureAspect::All,
+            },
+            &rgba,
+            wgpu::ImageDataLayout {
+                offset: 0,
+                bytes_per_row: Some(4 * dimensions.0),
+                rows_per_image: Some(dimensions.1),
+            },
+            texture_extent,
+        );
+
+        let texture_view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+            address_mode_u: wgpu::AddressMode::ClampToEdge,
+            address_mode_v: wgpu::AddressMode::ClampToEdge,
+            address_mode_w: wgpu::AddressMode::ClampToEdge,
+            mag_filter: wgpu::FilterMode::Linear,
+            min_filter: wgpu::FilterMode::Linear,
+            mipmap_filter: wgpu::FilterMode::Nearest,
+            ..Default::default()
+        });
+
+        let texture_bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("Texture Bind Group Layout"),
+            entries: &[
+                wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Texture {
+                        sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                        view_dimension: wgpu::TextureViewDimension::D2,
+                        multisampled: false,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                    count: None,
+                },
+            ],
+        });
+
+        let texture_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &texture_bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::TextureView(&texture_view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: wgpu::BindingResource::Sampler(&sampler),
+                },
+            ],
+            label: Some("Texture Bind Group"),
+        });
 
         let uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Uniform Buffer"),
@@ -144,6 +199,8 @@ impl CubeState {
             vertex_buffer,
             index_buffer,
             num_indices: INDICES.len() as u32,
+            texture_bind_group,
+            texture,
         }
     }
 
@@ -177,9 +234,31 @@ fn init(app: &mut App) -> Box<dyn State> {
         }],
     });
 
+    let texture_bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        label: Some("Texture Bind Group Layout"),
+        entries: &[
+            wgpu::BindGroupLayoutEntry {
+                binding: 0,
+                visibility: wgpu::ShaderStages::FRAGMENT,
+                ty: wgpu::BindingType::Texture {
+                    sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                    view_dimension: wgpu::TextureViewDimension::D2,
+                    multisampled: false,
+                },
+                count: None,
+            },
+            wgpu::BindGroupLayoutEntry {
+                binding: 1,
+                visibility: wgpu::ShaderStages::FRAGMENT,
+                ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                count: None,
+            },
+        ],
+    });
+
     let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: None,
-        bind_group_layouts: &[&uniform_bind_group_layout],
+        bind_group_layouts: &[&uniform_bind_group_layout, &texture_bind_group_layout],
         push_constant_ranges: &[],
     });
 
@@ -202,7 +281,7 @@ fn init(app: &mut App) -> Box<dyn State> {
                         wgpu::VertexAttribute {
                             offset: 12,
                             shader_location: 1,
-                            format: wgpu::VertexFormat::Float32x3,
+                            format: wgpu::VertexFormat::Float32x2,
                         },
                     ],
                 },
@@ -235,6 +314,7 @@ fn init(app: &mut App) -> Box<dyn State> {
         pipeline_layout,
         display.config.format,
         &device,
+        &display.queue,
     ))
 }
 
@@ -269,7 +349,7 @@ fn render(app: &mut App, mut state: &mut Box<dyn State>) {
             let model = Matrix4::from_angle_y(Rad(elapsed));
             log::info!("{}", elapsed);
 
-            let view = Matrix4::look_at_rh(Point3::new(2.0, 2.0, 2.0), Point3::new(0.0, 0.0, 0.0), Vector3::unit_y());
+            let view = Matrix4::look_at_rh(Point3::new(3.0, 3.0, 3.0), Point3::new(0.0, 0.0, 0.0), Vector3::unit_y());
             let proj = perspective(Deg(45.0), aspect_ratio, 0.1, 10.0);
             let mvp = proj * view * model;
 
@@ -278,7 +358,7 @@ fn render(app: &mut App, mut state: &mut Box<dyn State>) {
             queue.write_buffer(&state.uniform_buffer, 0, bytemuck::cast_slice(&[Uniforms::from(mvp)]));
 
             let mut rpass = create_render_pass(state, &mut encoder, state.view.as_ref().unwrap(), color);
-            draw_cube(&mut rpass, &state.render_pipeline, &state.uniform_bind_group, &state.vertex_buffer, &state.index_buffer, state.num_indices);
+            draw_cube(&mut rpass, &state.render_pipeline, &state.uniform_bind_group, &state.vertex_buffer, &state.index_buffer, state.num_indices, &state.texture_bind_group);
         }
 
         {
@@ -356,9 +436,11 @@ pub fn draw_cube<'a>(
     vertex_buffer: &'a wgpu::Buffer,
     index_buffer: &'a wgpu::Buffer,
     num_indices: u32,
+    texture_bind_group: &'a wgpu::BindGroup,
 ) {
     rpass.set_pipeline(pipeline);
     rpass.set_bind_group(0, bind_group, &[]);
+    rpass.set_bind_group(1, texture_bind_group, &[]);
     rpass.set_vertex_buffer(0, vertex_buffer.slice(..));
     rpass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint16);
     rpass.draw_indexed(0..num_indices, 0, 0..1);
