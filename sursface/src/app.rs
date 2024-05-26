@@ -137,11 +137,6 @@ impl<'a> ApplicationHandler for App<'a> {
                 if let Some(display) = self.display.as_mut() {
                     display.resize(physical_size);
                 }
-
-                if let Some(init) = self.init.take() {
-                    self.state = Some(Arc::new(Mutex::new(init(self))));
-                    self.init = Some(init);
-                }
             }
             WindowEvent::RedrawRequested => {
                 if let Some(render) = self.render.take() {
