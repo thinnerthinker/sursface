@@ -6,7 +6,7 @@ use wgpu::{util::DeviceExt, Color, CommandEncoder, RenderPipeline, SurfaceTextur
 use cgmath::{Deg, Matrix4, Point3, Rad, Vector3, perspective};
 use cgmath::SquareMatrix;
 use sursface::app::State;
-use image::GenericImageView;
+use image::{GenericImageView, ImageFormat};
 
 use crate::cube::Vertex;
 
@@ -60,7 +60,8 @@ impl From<Matrix4<f32>> for Uniforms {
 }
 
 fn load_texture(device: &Device, queue: &Queue) -> (BindGroupLayout, BindGroup) {
-    let img = image::open("examples/src/cube_and_inputs/assets/dice.png").unwrap();
+    let image_bytes = include_bytes!("assets/dice.png");
+    let img = image::load(std::io::Cursor::new(image_bytes.as_ref()), ImageFormat::Png).unwrap();
     let rgba = img.to_rgba8();
     let dimensions = img.dimensions();
 
