@@ -18,9 +18,6 @@ jobs:
       tag_name: ${{ steps.generate_tag.outputs.tag }}
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
-
       - name: Generate Tag Name
         id: generate_tag
         run: |
