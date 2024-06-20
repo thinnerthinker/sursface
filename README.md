@@ -1,21 +1,25 @@
 # Sursface
 
-Sursface is a cross-platform rendering library designed to simplify the development of high-performance graphical applications. It provides support for multiple platforms, automatically generating a window and hooking it up with wgpu, which can be directly used through sursface's crate.
+Sursface is a small cross-platform rendering library designed to simplify the development of WebGPU applications, without compromising developer control.
+
+It builds upon well-established APIs (`wgpu` and `winit`) to wrap over the core lifecycle operations of a graphical app, while re-exposing the full capabilities of these APIs unchanged. Sursface's goal is to enable writing plain WebGPU code with less hassle.
+
+## Supported Platforms
+- **Cross-Platform Desktop**: Compile and run on Linux or Windows.
+- **WASM**: Automatically generate JavaScript bindings for the `wasm32-unknown` Nix target, making your apps trivially embeddable into webpages.
 
 ## Features
-
-- **Cross-Platform Support**: Compile and run on various platforms including Linux, Windows, and MacOS (untested).
-- **WASM Support**: Automatically generate JavaScript bindings for the `wasm32-unknown` Nix target, enabling web-based applications.
-
-## Releases
-
-New releases are automatically built by a pipeline on every push to `main`. These can be directly downloaded, unzipped, and executed, without any installation process.
+- **Ready-made WebGPU Surface**: Sursface provides the entrypoint to your graphical app by supplying a platform window configured to be used as a surface by `wgpu`.
+- **Event Loop**: Sursface abstracts away the specifics of the event loop, whether it's running on desktop or in the browser. You simply need to provide the function pointer to your frame-by-frame logic, and Sursface will regularly call it for you.
+- **No New Tech**: Once the setup is done, keep using `wgpu` as if `sursface` wasn't there.
+- **Default Logic (WIP)**: Sursface will offer opt-in shortcuts for some elementary operations through simple functions, further reducing graphical boilerplate.
+- **C-friendly API (WIP)**: Designed with simplicity in mind, Sursface can be mapped one-to-one to C.
 
 ## Building Sursface
 
 ### Prerequisites
 
-To compile Sursface, ensure you have the following tools installed: Rust, Cargo, [Nix](https://nixos.org/download.html) (optional but recommended).
+To compile Sursface, ensure you have the following tools installed: Rust, Cargo, and optionally [Nix](https://nixos.org/download.html) (recommended).
 
 ### Installation
 
@@ -36,7 +40,7 @@ cargo build --release
 
 ### Building with Nix
 
-To build a binary inside the Nix store ready to run locally:
+To build a binary inside the Nix store, ready to run locally:
 
 ```sh
 nix build .
@@ -46,28 +50,26 @@ nix build .
 
 Sursface supports cross-compilation to various targets. Here are some examples:
 
-#### Compiling for Linux
-
 ```sh
 nix build .#x86_64-linux
-```
-
-#### Compiling for Windows
-
-```sh
 nix build .#x86_64-windows
-```
-
-#### Compiling for WebAssembly (WASM)
-
-```sh
 nix build .#wasm32-unknown
 ```
 
+## Releases
+
+Releases consist of executable binaries of the examples. These are automatically built by a pipeline on every push to `main`, and can be directly downloaded, unzipped, and ran, without any installation process.
+
 ## Running Examples
 
-There are example applications included in the `examples` directory. To run an example:
+Examples can also be run directly with `cargo`:
 
 ```sh
-cargo run hello_window
+cargo run --bin <example_name>
+```
+
+For instance:
+
+```sh
+cargo run --bin hello_triangle
 ```
