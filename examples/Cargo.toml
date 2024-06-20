@@ -2,7 +2,7 @@
 name = "sursface_examples"
 version = "0.1.0"
 edition = "2021"
-description = "Common example code"
+description = "Sursface example projects"
 
 [[bin]]
 name = "hello_window"
@@ -13,8 +13,8 @@ name = "hello_triangle"
 path = "src/hello_triangle/main.rs"
 
 [[bin]]
-name = "cube_and_inputs"
-path = "src/cube_and_inputs/main.rs"
+name = "spinning_cube"
+path = "src/spinning_cube/main.rs"
 
 
 [dependencies]
