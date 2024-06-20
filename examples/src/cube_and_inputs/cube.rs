@@ -1,5 +1,4 @@
 use bytemuck::{Pod,Zeroable};
-use cgmath::Matrix4;
 
 #[repr(C)]
 #[derive(Copy, Clone, Pod, Zeroable)]
@@ -80,18 +79,3 @@ pub const INDICES: &[u16] = &[
     // 5
     20, 22, 21, 22, 20, 23,
 ];
-
-
-#[repr(C)]
-#[derive(Copy, Clone, Pod, Zeroable)]
-pub struct Uniforms {
-    model_view_proj: [[f32; 4]; 4],
-}
-
-impl From<Matrix4<f32>> for Uniforms {
-    fn from(m: Matrix4<f32>) -> Self {
-        Uniforms {
-            model_view_proj: m.into(),
-        }
-    }
-}

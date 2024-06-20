@@ -64,7 +64,7 @@ fn init_logger() {
 impl<'a> App<'a> {
     #[cfg(not(target_arch = "wasm32"))]
     pub fn from_window_size(size: PhysicalSize<u32>) -> Self {
-        log::info!("Setting window size");
+        log::debug!("Setting window size");
         App {
             initial_size: size,
             ..Default::default()
@@ -73,7 +73,7 @@ impl<'a> App<'a> {
 
     #[cfg(target_arch = "wasm32")]
     pub fn from_canvas(canvas: wgpu::web_sys::HtmlCanvasElement) -> Self {
-        log::info!("Setting canvas size");
+        log::debug!("Setting canvas size");
         App {
             initial_size: PhysicalSize::new(canvas.width(), canvas.height()),
             canvas: Some(canvas),
@@ -108,7 +108,7 @@ impl<'a> ApplicationHandler for App<'a> {
             if let Some(canvas) = self.canvas.clone() {
                 self.display = Some(Display::from_canvas(event_loop, canvas));
             } else {
-                log::info!("Canvas is not set");
+                log::debug!("Canvas is not set");
             }
         }
 
@@ -133,19 +133,19 @@ impl<'a> ApplicationHandler for App<'a> {
                 event_loop.exit();
             }
             WindowEvent::Resized(physical_size) => {
-                log::info!("Window resized: {:?}", physical_size);
+                log::debug!("Window resized: {:?}", physical_size);
                 if let Some(display) = self.display.as_mut() {
                     display.resize(physical_size);
                 }
             }
             WindowEvent::RedrawRequested => {
                 if let Some(render) = self.render.take() {
-                    log::info!("Locking state");
+                    log::debug!("Locking state");
                     let state_arc = Arc::clone(self.state.as_ref().unwrap());
                     let mut state_lock = state_arc.lock().unwrap();
-                    log::info!("State locked");
+                    log::debug!("State locked");
 
-                    log::info!("rendering");
+                    log::debug!("rendering");
                     render(self, &mut *state_lock);
 
                     self.render = Some(render);

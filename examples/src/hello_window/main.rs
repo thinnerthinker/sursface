@@ -1,5 +1,4 @@
 use sursface::{app::{App, State}, wgpu};
-use std::any::Any;
 #[cfg(target_arch = "wasm32")]
 use sursface::wasm_bindgen;
 

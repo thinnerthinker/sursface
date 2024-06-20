@@ -1,11 +1,10 @@
 use std::time::Instant;
-use cube::{Uniforms, INDICES, VERTICES};
-use sursface::wgpu::Buffer;
+use cube::{INDICES, VERTICES};
+use sursface::wgpu::{BindGroup, BindGroupLayout, Buffer, Device, Queue, RenderPass, Surface};
 use sursface::{app::App, wgpu};
-use wgpu::{util::DeviceExt, Color, CommandEncoder, RenderPipeline, ShaderModule, SurfaceTexture, TextureFormat, TextureView};
+use wgpu::{util::DeviceExt, Color, CommandEncoder, RenderPipeline, SurfaceTexture, TextureView};
 use cgmath::{Deg, Matrix4, Point3, Rad, Vector3, perspective};
 use cgmath::SquareMatrix;
-use bytemuck::{Pod, Zeroable};
 use sursface::app::State;
 use image::GenericImageView;
 
@@ -32,12 +31,9 @@ pub fn start_browser(canvas: sursface::wgpu::web_sys::HtmlCanvasElement) {
 
 #[cfg(target_arch = "wasm32")]
 fn main() {}
+
 struct CubeState {
     render_pipeline: RenderPipeline,
-    shader: ShaderModule,
-    pipeline_layout: wgpu::PipelineLayout,
-    format: TextureFormat,
-    view: Option<TextureView>,
     start_time: Instant,
     uniform_buffer: wgpu::Buffer,
     uniform_bind_group: wgpu::BindGroup,
@@ -45,193 +41,71 @@ struct CubeState {
     index_buffer: Buffer,
     num_indices: u32,
     texture_bind_group: wgpu::BindGroup,
-    texture: wgpu::Texture,
 }
 
 impl State for CubeState {}
 
-impl CubeState {
-    fn new(
-        render_pipeline: RenderPipeline,
-        shader: ShaderModule,
-        pipeline_layout: wgpu::PipelineLayout,
-        format: TextureFormat,
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
-    ) -> Self {
-        let start_time = Instant::now();
+#[repr(C)]
+#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+pub struct Uniforms {
+    model_view_proj: [[f32; 4]; 4],
+}
 
-        let img = image::open("examples/src/cube_and_inputs/assets/dice.png").unwrap();
-        let rgba = img.to_rgba8();
-        let dimensions = img.dimensions();
-
-        let texture_extent = wgpu::Extent3d {
-            width: dimensions.0,
-            height: dimensions.1,
-            depth_or_array_layers: 1,
-        };
-
-        let texture = device.create_texture(&wgpu::TextureDescriptor {
-            label: Some("Texture"),
-            size: texture_extent,
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba8UnormSrgb,
-            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
-            view_formats: &[],
-        });
-
-        queue.write_texture(
-            wgpu::ImageCopyTexture {
-                texture: &texture,
-                mip_level: 0,
-                origin: wgpu::Origin3d::ZERO,
-                aspect: wgpu::TextureAspect::All,
-            },
-            &rgba,
-            wgpu::ImageDataLayout {
-                offset: 0,
-                bytes_per_row: Some(4 * dimensions.0),
-                rows_per_image: Some(dimensions.1),
-            },
-            texture_extent,
-        );
-
-        let texture_view = texture.create_view(&wgpu::TextureViewDescriptor::default());
-        let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
-            address_mode_u: wgpu::AddressMode::ClampToEdge,
-            address_mode_v: wgpu::AddressMode::ClampToEdge,
-            address_mode_w: wgpu::AddressMode::ClampToEdge,
-            mag_filter: wgpu::FilterMode::Linear,
-            min_filter: wgpu::FilterMode::Linear,
-            mipmap_filter: wgpu::FilterMode::Nearest,
-            ..Default::default()
-        });
-
-        let texture_bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: Some("Texture Bind Group Layout"),
-            entries: &[
-                wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Texture {
-                        sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                        view_dimension: wgpu::TextureViewDimension::D2,
-                        multisampled: false,
-                    },
-                    count: None,
-                },
-                wgpu::BindGroupLayoutEntry {
-                    binding: 1,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                    count: None,
-                },
-            ],
-        });
-
-        let texture_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &texture_bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&texture_view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&sampler),
-                },
-            ],
-            label: Some("Texture Bind Group"),
-        });
-
-        let uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Uniform Buffer"),
-            contents: bytemuck::cast_slice(&[Uniforms::from(Matrix4::identity())]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        });
-
-        let uniform_bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: Some("Uniform Bind Group Layout"),
-            entries: &[wgpu::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: wgpu::ShaderStages::VERTEX,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
-                },
-                count: None,
-            }],
-        });
-
-        let uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Uniform Bind Group"),
-            layout: &uniform_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: uniform_buffer.as_entire_binding(),
-            }],
-        });
-
-        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Vertex Buffer"),
-            contents: bytemuck::cast_slice(VERTICES),
-            usage: wgpu::BufferUsages::VERTEX,
-        });
-
-        let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Index Buffer"),
-            contents: bytemuck::cast_slice(INDICES),
-            usage: wgpu::BufferUsages::INDEX,
-        });
-
-        CubeState {
-            render_pipeline,
-            shader,
-            pipeline_layout,
-            format,
-            view: None,
-            start_time,
-            uniform_buffer,
-            uniform_bind_group,
-            vertex_buffer,
-            index_buffer,
-            num_indices: INDICES.len() as u32,
-            texture_bind_group,
-            texture,
+impl From<Matrix4<f32>> for Uniforms {
+    fn from(m: Matrix4<f32>) -> Self {
+        Uniforms {
+            model_view_proj: m.into(),
         }
-    }
-
-    fn set_view(&mut self, view: TextureView) {
-        self.view = Some(view);
     }
 }
 
-fn init(app: &mut App) -> Box<dyn State> {
-    use std::borrow::Cow;
+fn load_texture(device: &Device, queue: &Queue) -> (BindGroupLayout, BindGroup) {
+    let img = image::open("examples/src/cube_and_inputs/assets/dice.png").unwrap();
+    let rgba = img.to_rgba8();
+    let dimensions = img.dimensions();
 
-    let display = app.display.as_ref().unwrap();
-    let device = &display.device;
+    let texture_extent = wgpu::Extent3d {
+        width: dimensions.0,
+        height: dimensions.1,
+        depth_or_array_layers: 1,
+    };
 
-    let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-        label: None,
-        source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("assets/shader.wgsl"))),
+    let texture = device.create_texture(&wgpu::TextureDescriptor {
+        label: Some("Texture"),
+        size: texture_extent,
+        mip_level_count: 1,
+        sample_count: 1,
+        dimension: wgpu::TextureDimension::D2,
+        format: wgpu::TextureFormat::Rgba8UnormSrgb,
+        usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+        view_formats: &[],
     });
 
-    let uniform_bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-        label: Some("Uniform Bind Group Layout"),
-        entries: &[wgpu::BindGroupLayoutEntry {
-            binding: 0,
-            visibility: wgpu::ShaderStages::VERTEX,
-            ty: wgpu::BindingType::Buffer {
-                ty: wgpu::BufferBindingType::Uniform,
-                has_dynamic_offset: false,
-                min_binding_size: None,
-            },
-            count: None,
-        }],
+    queue.write_texture(
+        wgpu::ImageCopyTexture {
+            texture: &texture,
+            mip_level: 0,
+            origin: wgpu::Origin3d::ZERO,
+            aspect: wgpu::TextureAspect::All,
+        },
+        &rgba,
+        wgpu::ImageDataLayout {
+            offset: 0,
+            bytes_per_row: Some(4 * dimensions.0),
+            rows_per_image: Some(dimensions.1),
+        },
+        texture_extent,
+    );
+
+    let texture_view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+    let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+        address_mode_u: wgpu::AddressMode::ClampToEdge,
+        address_mode_v: wgpu::AddressMode::ClampToEdge,
+        address_mode_w: wgpu::AddressMode::ClampToEdge,
+        mag_filter: wgpu::FilterMode::Nearest,
+        min_filter: wgpu::FilterMode::Nearest,
+        mipmap_filter: wgpu::FilterMode::Nearest,
+        ..Default::default()
     });
 
     let texture_bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -250,11 +124,76 @@ fn init(app: &mut App) -> Box<dyn State> {
             wgpu::BindGroupLayoutEntry {
                 binding: 1,
                 visibility: wgpu::ShaderStages::FRAGMENT,
-                ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::NonFiltering),
                 count: None,
             },
         ],
     });
+
+    let texture_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        layout: &texture_bind_group_layout,
+        entries: &[
+            wgpu::BindGroupEntry {
+                binding: 0,
+                resource: wgpu::BindingResource::TextureView(&texture_view),
+            },
+            wgpu::BindGroupEntry {
+                binding: 1,
+                resource: wgpu::BindingResource::Sampler(&sampler),
+            },
+        ],
+        label: Some("Texture Bind Group"),
+    });
+
+    (texture_bind_group_layout, texture_bind_group)
+}
+
+fn create_uniforms(device: &Device) -> (Buffer, BindGroupLayout, BindGroup) {
+    let uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        label: Some("Uniform Buffer"),
+        contents: bytemuck::cast_slice(&[Uniforms::from(Matrix4::identity())]),
+        usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+    });
+
+    let uniform_bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        label: Some("Uniform Bind Group Layout"),
+        entries: &[wgpu::BindGroupLayoutEntry {
+            binding: 0,
+            visibility: wgpu::ShaderStages::VERTEX,
+            ty: wgpu::BindingType::Buffer {
+                ty: wgpu::BufferBindingType::Uniform,
+                has_dynamic_offset: false,
+                min_binding_size: None,
+            },
+            count: None,
+        }],
+    });
+
+    let uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        label: Some("Uniform Bind Group"),
+        layout: &uniform_bind_group_layout,
+        entries: &[wgpu::BindGroupEntry {
+            binding: 0,
+            resource: uniform_buffer.as_entire_binding(),
+        }],
+    });
+
+    (uniform_buffer, uniform_bind_group_layout, uniform_bind_group)
+}
+
+fn init(app: &mut App) -> Box<dyn State> {
+    use std::borrow::Cow;
+
+    let display = app.display.as_ref().unwrap();
+    let device = &display.device;
+
+    let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+        label: None,
+        source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("assets/shader.wgsl"))),
+    });
+
+    let (texture_bind_group_layout, texture_bind_group) = load_texture(device, &display.queue);
+    let (uniform_buffer, uniform_bind_group_layout, uniform_bind_group ) = create_uniforms(device);
 
     let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: None,
@@ -308,18 +247,34 @@ fn init(app: &mut App) -> Box<dyn State> {
         multiview: None,
     });
 
-    Box::new(CubeState::new(
+    let start_time = Instant::now();
+
+    let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        label: Some("Vertex Buffer"),
+        contents: bytemuck::cast_slice(VERTICES),
+        usage: wgpu::BufferUsages::VERTEX,
+    });
+
+    let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        label: Some("Index Buffer"),
+        contents: bytemuck::cast_slice(INDICES),
+        usage: wgpu::BufferUsages::INDEX,
+    });
+
+    Box::new(CubeState {
         render_pipeline,
-        shader,
-        pipeline_layout,
-        display.config.format,
-        &device,
-        &display.queue,
-    ))
+        start_time,
+        uniform_buffer,
+        uniform_bind_group,
+        vertex_buffer,
+        index_buffer,
+        num_indices: 36,
+        texture_bind_group,
+    })
 }
 
-fn render(app: &mut App, mut state: &mut Box<dyn State>) {
-    let color = Color {
+fn render(app: &mut App, state: &mut Box<dyn State>) {
+    let clear_color = Color {
         r: 100.0 / 255.0,
         g: 149.0 / 255.0,
         b: 237.0 / 255.0,
@@ -327,37 +282,34 @@ fn render(app: &mut App, mut state: &mut Box<dyn State>) {
     };
 
     let output = {
-        let (output, mut encoder, view) = {
-            let display = app.display.as_ref().unwrap();
+        let display = app.display.as_ref().unwrap();
 
-            // Clear the screen and get the output, encoder, and view
-            let (output, mut encoder) = clear_screen(app, color).unwrap();
-            let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let mut encoder = display.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("Encoder"),
+        });
 
-            (output, encoder, view)
-        };
-
+        let (output, view) = get_framebuffer(&display.surface);
+        
         {
+            let mut rpass = clear_screen(&view, &mut encoder, clear_color);
+
             let display = app.display.as_ref().unwrap();
             let state = unsafe { core::mem::transmute::<&mut Box<dyn State>, &mut Box<CubeState>>(state) };
-            state.set_view(view);
 
             let now = Instant::now();
             let elapsed = (now - state.start_time).as_secs_f32();
             let aspect_ratio = app.display.as_ref().unwrap().config.width as f32 / app.display.as_ref().unwrap().config.height as f32;
             
             let model = Matrix4::from_angle_y(Rad(elapsed));
-            log::info!("{}", elapsed);
+            log::debug!("{}", elapsed);
 
             let view = Matrix4::look_at_rh(Point3::new(3.0, 3.0, 3.0), Point3::new(0.0, 0.0, 0.0), Vector3::unit_y());
             let proj = perspective(Deg(45.0), aspect_ratio, 0.1, 10.0);
             let mvp = proj * view * model;
 
-            // Update the uniform buffer
             let queue = &display.queue;
             queue.write_buffer(&state.uniform_buffer, 0, bytemuck::cast_slice(&[Uniforms::from(mvp)]));
 
-            let mut rpass = create_render_pass(state, &mut encoder, state.view.as_ref().unwrap(), color);
             draw_cube(&mut rpass, &state.render_pipeline, &state.uniform_bind_group, &state.vertex_buffer, &state.index_buffer, state.num_indices, &state.texture_bind_group);
         }
 
@@ -369,52 +321,24 @@ fn render(app: &mut App, mut state: &mut Box<dyn State>) {
         output
     };
 
-    present(output);
+    output.present();
 }
 
-fn clear_screen(
-    app: &mut App,
-    color: Color,
-) -> Result<(SurfaceTexture, CommandEncoder), wgpu::SurfaceError> {
-    let display = app.display.as_ref().unwrap();
-    let output = display.surface.get_current_texture()?;
+fn get_framebuffer(surface: &Surface) -> (SurfaceTexture, TextureView) {
+    let output = surface.get_current_texture().unwrap();
     let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
-
-    let mut encoder = display.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-        label: Some("Clear Screen Encoder"),
-    });
-
-    {
-        let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-            label: Some("Clear Screen Render Pass"),
-            timestamp_writes: Default::default(),
-            occlusion_query_set: Default::default(),
-            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                view: &view,
-                resolve_target: None,
-                ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(color),
-                    store: wgpu::StoreOp::Store,
-                },
-            })],
-            depth_stencil_attachment: None,
-        });
-        // No further commands needed for clearing
-    }
-
-    Ok((output, encoder))
+    (output, view)
 }
 
-fn create_render_pass<'a>(
-    state: &'a CubeState,
+fn clear_screen<'a>(
+    framebuffer_view: &'a TextureView,
     encoder: &'a mut CommandEncoder,
-    view: &'a TextureView,
     color: Color,
-) -> wgpu::RenderPass<'a> {
+) -> RenderPass<'a> {
     let rpass_descriptor = wgpu::RenderPassDescriptor {
         label: Some("Render Pass"),
         color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-            view,
+            view: framebuffer_view,
             resolve_target: None,
             ops: wgpu::Operations {
                 load: wgpu::LoadOp::Clear(color),
@@ -444,8 +368,4 @@ pub fn draw_cube<'a>(
     rpass.set_vertex_buffer(0, vertex_buffer.slice(..));
     rpass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint16);
     rpass.draw_indexed(0..num_indices, 0, 0..1);
-}
-
-fn present(output: SurfaceTexture) {
-    output.present();
 }
