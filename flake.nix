@@ -16,7 +16,7 @@
         pkgs = nixpkgs.legacyPackages.${system};
         targetPlatforms =
           let
-            buildFiles = [ "assets" ];
+            buildFilePatterns = [ ".*/assets/.*" ];
           in
           [
             {
@@ -43,7 +43,7 @@
                   fi
                 ' sh {} \;
               '';
-              inherit buildFiles;
+              inherit buildFilePatterns;
               env = {
                 LD_LIBRARY_PATH = with pkgs; lib.makeLibraryPath [
                   libxkbcommon
@@ -67,7 +67,7 @@
                 mingwW64.stdenv.cc
                 mingwW64.windows.pthreads
               ];
-              inherit buildFiles;
+              inherit buildFilePatterns;
               env = {
                 # fixes issues related to libring
                 TARGET_CC = with pkgs.pkgsCross; "${mingwW64.stdenv.cc}/bin/${mingwW64.stdenv.cc.targetPrefix}cc";
@@ -86,7 +86,7 @@
                 mkdir $out/bindgen
                 find $out/bin -type f -name "*.wasm" -exec wasm-bindgen {} --out-dir $out/bindgen --web \;
               '';
-              inherit buildFiles;
+              inherit buildFilePatterns;
               env = {
                 packages = with pkgs; [ wasm-bindgen-cli ];
               };
@@ -103,4 +103,3 @@
       }
     );
 } 
- 
