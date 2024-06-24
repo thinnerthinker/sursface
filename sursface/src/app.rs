@@ -12,17 +12,14 @@ extern crate console_error_panic_hook;
 
 use super::display::Display;
 
-pub trait State {}
-
-#[derive(Default)]
-pub struct App<'a> {
+pub struct App<'a, State> {
     pub display: Option<Display<'a>>,
     pub initial_size: PhysicalSize<u32>,
     #[cfg(target_arch = "wasm32")]
-    pub canvas: Option<wgpu::web_sys::HtmlCanvasElement>,
-    pub state: Option<Arc<Mutex<Box<dyn State>>>>,
-    pub init: Option<Box<dyn Fn(&mut App<'a>) -> Box<dyn State + 'static>>>,
-    pub render: Option<Box<dyn Fn(&mut App<'a>, &mut Box<dyn State + 'static>)>>,
+    pub canvas: wgpu::web_sys::HtmlCanvasElement,
+    pub state: Option<Arc<Mutex<State>>>,
+    pub init: Arc<dyn Fn(&mut App<State>) -> State>,
+    pub render: Arc<dyn Fn(&mut App<State>, &mut State)>,
 }
 
 
@@ -61,44 +58,44 @@ fn init_logger() {
     }
 }
 
-impl<'a> App<'a> {
+impl<'a, State> App<'a, State> {
     #[cfg(not(target_arch = "wasm32"))]
-    pub fn from_window_size(size: PhysicalSize<u32>) -> Self {
+    pub fn from_window_size(
+        size: PhysicalSize<u32>,
+        init_func: &'static dyn Fn(&mut App<State>) -> State,
+        render_func: &'static dyn Fn(&mut App<State>, &mut State)) -> Self
+    {
         log::debug!("Setting window size");
         App {
             initial_size: size,
-            ..Default::default()
+            display: None,
+            state: None,
+            init: Arc::new(init_func),
+            render: Arc::new(render_func),
         }
     }
 
     #[cfg(target_arch = "wasm32")]
-    pub fn from_canvas(canvas: wgpu::web_sys::HtmlCanvasElement) -> Self {
+    pub fn from_canvas(
+        canvas: wgpu::web_sys::HtmlCanvasElement,
+        init_func: &'static dyn Fn(&mut App<State>) -> State,
+        render_func: &'static dyn Fn(&mut App<State>, &mut State) -> Self) -> Self 
+    {
         log::debug!("Setting canvas size");
         App {
             initial_size: PhysicalSize::new(canvas.width(), canvas.height()),
-            canvas: Some(canvas),
-            ..Default::default()
+            display: None,
+            state: None,
+            init: init_func,
+            render: render_func,
         }
-    }
-
-    pub fn set_init_function<F>(&mut self, init_func: F)
-    where
-        F: Fn(&mut App<'a>) -> Box<dyn State + 'static> + 'static,
-    {
-        self.init = Some(Box::new(init_func));
-    }
-
-    pub fn set_render_function<F>(&mut self, render_func: F)
-    where
-        F: Fn(&mut App<'a>, &mut Box<dyn State + 'static>) + 'static,
-    {
-        self.render = Some(Box::new(render_func));
     }
 }
 
-impl<'a> ApplicationHandler for App<'a> {
+impl<'a, State> ApplicationHandler for App<'a, State> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         init_logger();
+        
         #[cfg(not(target_arch = "wasm32"))]
         {
             self.display = Some(Display::from_window_size(event_loop, self.initial_size));
@@ -112,12 +109,15 @@ impl<'a> ApplicationHandler for App<'a> {
             }
         }
 
-        if let Some(init) = self.init.take() {
-            self.state = Some(Arc::new(Mutex::new(init(self))));
-            self.init = Some(init);
-        }
-    }
+        let new_state = {
+            let init_fn = Arc::clone(&self.init);
+            init_fn(self)
+        };
 
+        // Now, set the state with a mutable borrow
+        self.state = Some(Arc::new(Mutex::new(new_state)));
+    }
+    
     fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
         match event {
             WindowEvent::CloseRequested
@@ -139,17 +139,7 @@ impl<'a> ApplicationHandler for App<'a> {
                 }
             }
             WindowEvent::RedrawRequested => {
-                if let Some(render) = self.render.take() {
-                    log::debug!("Locking state");
-                    let state_arc = Arc::clone(self.state.as_ref().unwrap());
-                    let mut state_lock = state_arc.lock().unwrap();
-                    log::debug!("State locked");
-
-                    log::debug!("rendering");
-                    render(self, &mut *state_lock);
-
-                    self.render = Some(render);
-                }
+                (Arc::clone(&self.render))(self, &mut self.state.clone().unwrap().lock().unwrap());
 
                 if let Some(display) = self.display.as_mut() {
                     display.window.as_ref().request_redraw();

@@ -112,10 +112,6 @@ impl<'a> Display<'a> {
         }
     }
 
-    fn window(&self) -> &Window {
-        &self.window
-    }
-
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
         if new_size.width > 0 && new_size.height > 0 {
             self.size = new_size;
@@ -124,12 +120,6 @@ impl<'a> Display<'a> {
             self.surface.configure(&self.device, &self.config);
         }
     }
-
-    fn input(&mut self, event: &WindowEvent) -> bool {
-        false
-    }
-
-    fn update(&mut self) {}
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         Ok(())

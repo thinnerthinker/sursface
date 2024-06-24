@@ -1,11 +1,11 @@
-use sursface::{app::{App, State}, wgpu};
+use sursface::{app::App, wgpu};
 #[cfg(target_arch = "wasm32")]
 use sursface::wasm_bindgen;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
     use sursface::winit::dpi::PhysicalSize;
-    sursface::start::create_window_desktop(PhysicalSize::new(1280, 720), init, render);
+    sursface::start::create_window_desktop(PhysicalSize::new(1280, 720), &init, &render);
 }
 
 
@@ -13,7 +13,7 @@ fn main() {
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn start_browser(canvas: sursface::wgpu::web_sys::HtmlCanvasElement) {
     use sursface::{start, wasm_bindgen};
-    start::create_window_browser(canvas, init, render);
+    start::create_window_browser(canvas, &init, &render);
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -22,15 +22,12 @@ fn main() {}
 
 #[derive(Clone)]
 struct EmptyState {}
-impl State for EmptyState {}
 
-
-
-pub fn init<'a>(app: &mut App<'a>) -> Box<dyn State> {
-    Box::new(EmptyState {})
+fn init<'a>(_app: &mut App<EmptyState>) -> EmptyState {
+    EmptyState {}
 }
 
-pub fn render<'a>(app: &mut App<'a>, _state: &mut Box<dyn State>) {
+fn render<'a>(app: &mut App<EmptyState>, _state: &mut EmptyState) {
     let output = clear_screen(app, wgpu::Color {
         r: 100.0 / 255.0,
         g: 149.0 / 255.0,
@@ -41,7 +38,7 @@ pub fn render<'a>(app: &mut App<'a>, _state: &mut Box<dyn State>) {
 }
 
 
-fn clear_screen<'a>(app: &mut App<'a>, color: sursface::wgpu::Color) -> Result<wgpu::SurfaceTexture, wgpu::SurfaceError> {
+fn clear_screen<'a>(app: &mut App<EmptyState>, color: sursface::wgpu::Color) -> Result<wgpu::SurfaceTexture, wgpu::SurfaceError> {
     let display = app.display.as_ref().unwrap();
     let output = display.surface.get_current_texture()?;
         let view = output
@@ -74,7 +71,7 @@ fn clear_screen<'a>(app: &mut App<'a>, color: sursface::wgpu::Color) -> Result<w
         Ok(output)
 }
 
-fn present<'a>(app: &mut App<'a>, output: sursface::wgpu::SurfaceTexture) -> Result<(), wgpu::SurfaceError> {
+fn present<'a>(app: &mut App<EmptyState>, output: sursface::wgpu::SurfaceTexture) -> Result<(), wgpu::SurfaceError> {
     output.present();
     Ok(())
 }

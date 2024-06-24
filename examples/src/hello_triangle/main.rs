@@ -1,9 +1,9 @@
-use sursface::{app::{App, State}, wgpu::{self, Color, CommandEncoder, RenderPass, RenderPipeline, Surface, SurfaceTexture, TextureView}};
+use sursface::{app::App, wgpu::{self, Color, CommandEncoder, RenderPass, RenderPipeline, Surface, SurfaceTexture, TextureView}};
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
     use sursface::winit::dpi::PhysicalSize;
-    sursface::start::create_window_desktop(PhysicalSize::new(1280, 720), init, render);
+    sursface::start::create_window_desktop(PhysicalSize::new(1280, 720), &init, &render);
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -15,17 +15,14 @@ fn main() {}
 pub fn start_browser(canvas: sursface::wgpu::web_sys::HtmlCanvasElement) {
     use sursface::{start, wasm_bindgen};
 
-    start::create_window_browser(canvas, init, render);
+    start::create_window_browser(canvas, &init, &render);
 }
 
 struct TriangleState {
     render_pipeline: RenderPipeline,
 }
 
-impl State for TriangleState {}
-
-
-fn init(app: &mut App) -> Box<dyn State> {
+fn init(app: &mut App<TriangleState>) -> TriangleState {
     use std::borrow::Cow;
     
     let display = app.display.as_ref().unwrap();
@@ -63,10 +60,10 @@ fn init(app: &mut App) -> Box<dyn State> {
         multiview: None,
     });
 
-    Box::new(TriangleState { render_pipeline })
+    TriangleState { render_pipeline }
 }
 
-fn render(app: &mut App, state: &mut Box<dyn State>) {
+fn render(app: &mut App<TriangleState>, state: &mut TriangleState) {
     let clear_color = Color {
         r: 100.0 / 255.0,
         g: 149.0 / 255.0,
@@ -75,7 +72,6 @@ fn render(app: &mut App, state: &mut Box<dyn State>) {
     };
 
     let display = app.display.as_ref().unwrap();
-    let state = unsafe { core::mem::transmute::<&mut Box<dyn State>, &mut Box<TriangleState>>(state) };
 
     let mut encoder = display.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
         label: Some("Encoder"),

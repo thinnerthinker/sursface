@@ -5,7 +5,6 @@ use sursface::{app::App, wgpu};
 use wgpu::{util::DeviceExt, Color, CommandEncoder, RenderPipeline, SurfaceTexture, TextureView};
 use cgmath::{Deg, Matrix4, Point3, Rad, Vector3, perspective};
 use cgmath::SquareMatrix;
-use sursface::app::State;
 use image::{GenericImageView, ImageFormat};
 
 use crate::cube::Vertex;
@@ -18,7 +17,7 @@ use sursface::wasm_bindgen;
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
     use sursface::winit::dpi::PhysicalSize;
-    sursface::start::create_window_desktop(PhysicalSize::new(1280, 720), init, render);
+    sursface::start::create_window_desktop(PhysicalSize::new(1280, 720), &init, &render);
 }
 
 
@@ -26,7 +25,7 @@ fn main() {
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn start_browser(canvas: sursface::wgpu::web_sys::HtmlCanvasElement) {
     use sursface::{start, wasm_bindgen};
-    start::create_window_browser(canvas, init, render);
+    start::create_window_browser(canvas, &init, &render);
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -42,8 +41,6 @@ struct CubeState {
     num_indices: u32,
     texture_bind_group: wgpu::BindGroup,
 }
-
-impl State for CubeState {}
 
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -182,7 +179,7 @@ fn create_uniforms(device: &Device) -> (Buffer, BindGroupLayout, BindGroup) {
     (uniform_buffer, uniform_bind_group_layout, uniform_bind_group)
 }
 
-fn init(app: &mut App) -> Box<dyn State> {
+fn init(app: &mut App<CubeState>) -> CubeState {
     use std::borrow::Cow;
 
     let display = app.display.as_ref().unwrap();
@@ -262,7 +259,7 @@ fn init(app: &mut App) -> Box<dyn State> {
         usage: wgpu::BufferUsages::INDEX,
     });
 
-    Box::new(CubeState {
+    CubeState {
         render_pipeline,
         start_time,
         uniform_buffer,
@@ -271,10 +268,10 @@ fn init(app: &mut App) -> Box<dyn State> {
         index_buffer,
         num_indices: 36,
         texture_bind_group,
-    })
+    }
 }
 
-fn render(app: &mut App, state: &mut Box<dyn State>) {
+fn render(app: &mut App<CubeState>, state: &mut CubeState) {
     let clear_color = Color {
         r: 100.0 / 255.0,
         g: 149.0 / 255.0,
@@ -295,7 +292,6 @@ fn render(app: &mut App, state: &mut Box<dyn State>) {
             let mut rpass = clear_screen(&view, &mut encoder, clear_color);
 
             let display = app.display.as_ref().unwrap();
-            let state = unsafe { core::mem::transmute::<&mut Box<dyn State>, &mut Box<CubeState>>(state) };
 
             let now = Instant::now();
             let elapsed = (now - state.start_time).as_secs_f32();
