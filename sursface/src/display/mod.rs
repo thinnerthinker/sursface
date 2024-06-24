@@ -3,7 +3,6 @@ use std::sync::Arc;
 use winit::{
     event_loop::ActiveEventLoop, 
     window::{Window, WindowAttributes},
-    event::WindowEvent,
     dpi::PhysicalSize
 };
 

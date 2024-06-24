@@ -36,6 +36,6 @@ pub fn create_window_browser<State: 'static>(
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);
 
-    let mut app = App::from_canvas(window_size, init, render, event);
+    let mut app = App::from_canvas(canvas, init, render, event);
     event_loop.run_app(&mut app).unwrap();
 }

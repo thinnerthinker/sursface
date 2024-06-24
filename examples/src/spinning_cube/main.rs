@@ -25,7 +25,7 @@ fn main() {
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn start_browser(canvas: sursface::wgpu::web_sys::HtmlCanvasElement) {
-    use sursface::{start, wasm_bindgen};
+    use sursface::start;
     start::create_window_browser(canvas, &init, &render, &event);
 }
 
@@ -372,7 +372,7 @@ pub fn draw_cube<'a>(
 }
 
 
-fn event<'a>(app: &mut App<CubeState>, state: &mut CubeState, event: WindowEvent) {
+fn event<'a>(_app: &mut App<CubeState>, state: &mut CubeState, event: WindowEvent) {
     let mut x = 0f64;
     let mut y = 0f64;
     
@@ -384,7 +384,7 @@ fn event<'a>(app: &mut App<CubeState>, state: &mut CubeState, event: WindowEvent
 
                 true
             }
-            WindowEvent::CursorMoved { device_id, position } => {
+            WindowEvent::CursorMoved { device_id: _, position } => {
                 x = position.x;
                 y = position.y;
 

@@ -12,7 +12,7 @@ fn main() {
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn start_browser(canvas: sursface::wgpu::web_sys::HtmlCanvasElement) {
-    use sursface::{start, wasm_bindgen};
+    use sursface::start;
     start::create_window_browser(canvas, &init, &render, &event);
 }
 
@@ -71,7 +71,7 @@ fn clear_screen<'a>(app: &mut App<EmptyState>, color: sursface::wgpu::Color) -> 
         Ok(output)
 }
 
-fn present<'a>(app: &mut App<EmptyState>, output: sursface::wgpu::SurfaceTexture) -> Result<(), wgpu::SurfaceError> {
+fn present<'a>(_app: &mut App<EmptyState>, output: sursface::wgpu::SurfaceTexture) -> Result<(), wgpu::SurfaceError> {
     output.present();
     Ok(())
 }

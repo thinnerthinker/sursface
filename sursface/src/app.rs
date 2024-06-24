@@ -5,7 +5,6 @@ use winit::event::{ElementState, KeyEvent, WindowEvent};
 use winit::event_loop::ActiveEventLoop;
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::WindowId;
-use std::any::Any;
 
 #[cfg(target_arch = "wasm32")]
 extern crate console_error_panic_hook;
@@ -88,6 +87,7 @@ impl<'a, State> App<'a, State> {
         log::debug!("Setting canvas size");
         App {
             initial_size: PhysicalSize::new(canvas.width(), canvas.height()),
+            canvas,
             display: None,
             state: None,
             init: Arc::new(init_func),
@@ -107,11 +107,7 @@ impl<'a, State> ApplicationHandler for App<'a, State> {
         }
         #[cfg(target_arch = "wasm32")]
         {
-            if let Some(canvas) = self.canvas.clone() {
-                self.display = Some(Display::from_canvas(event_loop, canvas));
-            } else {
-                log::debug!("Canvas is not set");
-            }
+            self.display = Some(Display::from_canvas(event_loop, self.canvas.clone()));
         }
 
         let new_state = {
