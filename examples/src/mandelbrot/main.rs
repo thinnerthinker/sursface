@@ -1,7 +1,6 @@
-use std::time::Instant;
-use sursface::wgpu::{BindGroup, BindGroupLayout, Buffer, Device, Queue, RenderPass, Surface, VertexBufferLayout};
+use sursface::wgpu::{BindGroup, BindGroupLayout, Buffer, Device, FragmentState, PipelineCompilationOptions, Queue, RenderPass, Surface, VertexBufferLayout, VertexState};
 use sursface::winit::dpi::PhysicalPosition;
-use sursface::winit::event::WindowEvent;
+use sursface::winit::event::{ElementState, MouseButton, WindowEvent};
 use sursface::{app::App, wgpu};
 use viewport::INDICES;
 use wgpu::{util::DeviceExt, Color, CommandEncoder, RenderPipeline, SurfaceTexture, TextureView};
@@ -19,7 +18,7 @@ pub mod viewport;
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
     use sursface::winit::dpi::PhysicalSize;
-    sursface::start::create_window_desktop(PhysicalSize::new(1280, 720), &init, &render, &event);
+    sursface::start::create_window_desktop(PhysicalSize::new(720, 720), &init, &render, &event);
 }
 
 
@@ -43,7 +42,10 @@ struct MandelbrotState {
     scale: f64,
     uniforms: Uniforms,
     translation_speed: f64,
-    scale_speed: f64
+    scale_speed: f64,
+    last_cursor_location: PhysicalPosition<f64>,
+    cursor_location: PhysicalPosition<f64>,
+    panning: bool
 }
 
 #[repr(C)]
@@ -110,7 +112,24 @@ fn init(app: &mut App<MandelbrotState>) -> MandelbrotState {
         vertex: wgpu::VertexState {
             module: &shader,
             entry_point: "vs_main",
-            buffers: &[Vertex::desc(),],
+            buffers: &[
+                wgpu::VertexBufferLayout {
+                    array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
+                    step_mode: wgpu::VertexStepMode::Vertex,
+                    attributes: &[
+                        wgpu::VertexAttribute {
+                            offset: 0,
+                            shader_location: 0,
+                            format: wgpu::VertexFormat::Float32x3,
+                        },
+                        wgpu::VertexAttribute {
+                            offset: 12,
+                            shader_location: 1,
+                            format: wgpu::VertexFormat::Float32x2,
+                        },
+                    ],
+                },
+            ],
             compilation_options: Default::default(),
         },
         fragment: Some(wgpu::FragmentState {
@@ -154,8 +173,11 @@ fn init(app: &mut App<MandelbrotState>) -> MandelbrotState {
         uniforms: Uniforms { model_view_proj: Matrix4::identity().into() },
         translation: Vector2::zero(),
         scale: 1f64,
-        translation_speed: 1f64,
+        translation_speed: 0.0001f64,
         scale_speed: 0.1f64,
+        last_cursor_location: PhysicalPosition::new(0f64, 0f64),
+        cursor_location: PhysicalPosition::new(0f64, 0f64),
+        panning: false
     }
 }
 
@@ -241,27 +263,20 @@ fn draw_mandelbrot<'a>(
     rpass.set_pipeline(pipeline);
     rpass.set_bind_group(0, &state.uniform_bind_group, &[]);
     rpass.set_vertex_buffer(0, state.vertex_buffer.slice(..));
-    rpass.set_index_buffer(state.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+    rpass.set_index_buffer(state.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
     rpass.draw_indexed(0..INDICES.len() as u32, 0, 0..1);
 }
 
 
 fn event<'a>(app: &mut App<MandelbrotState>, state: &mut MandelbrotState, event: WindowEvent) {
-    let mut x = 0f64;
-    let mut y = 0f64;
-    
     let moved = {
         match event {
             WindowEvent::Touch(a) => {
-                x = a.location.x;
-                y = a.location.y;
-
+                state.cursor_location = PhysicalPosition { x: a.location.x, y: a.location.y };
                 true
             }
             WindowEvent::CursorMoved { device_id, position } => {
-                x = position.x;
-                y = position.y;
-
+                state.cursor_location  = position;
                 true
             }
             _ => false
@@ -284,12 +299,27 @@ fn event<'a>(app: &mut App<MandelbrotState>, state: &mut MandelbrotState, event:
         }
     };
 
-    if moved {
-        state.translation.x = (x - state.translation.x) * state.translation_speed;
-        state.translation.y = (y - state.translation.y) * state.translation_speed;
+    match event {
+        WindowEvent::MouseInput { device_id, state: elem_state, button } => {
+            if elem_state == ElementState::Pressed && button == MouseButton::Left {
+                state.panning = true;
+            } else if elem_state == ElementState::Released && button == MouseButton::Left {
+                state.panning = false;
+            }
+        }
+        _ => ()
     }
+
+    if moved && state.panning {
+        state.translation.x += (state.cursor_location.x - state.last_cursor_location.x) * state.translation_speed;
+        state.translation.y -= (state.cursor_location.y - state.last_cursor_location.y) * state.translation_speed;
+    }
+
+    state.last_cursor_location = state.cursor_location;
 
     if scaled {
         state.scale += scale * state.scale_speed;
     }
+
+    
 }
