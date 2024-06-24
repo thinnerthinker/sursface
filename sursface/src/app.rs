@@ -20,6 +20,7 @@ pub struct App<'a, State> {
     pub state: Option<Arc<Mutex<State>>>,
     pub init: Arc<dyn Fn(&mut App<State>) -> State>,
     pub render: Arc<dyn Fn(&mut App<State>, &mut State)>,
+    pub event: Arc<dyn Fn(&mut App<State>, &mut State, WindowEvent)>,
 }
 
 
@@ -63,7 +64,8 @@ impl<'a, State> App<'a, State> {
     pub fn from_window_size(
         size: PhysicalSize<u32>,
         init_func: &'static dyn Fn(&mut App<State>) -> State,
-        render_func: &'static dyn Fn(&mut App<State>, &mut State)) -> Self
+        render_func: &'static dyn Fn(&mut App<State>, &mut State),
+        event_func: &'static dyn Fn(&mut App<State>, &mut State, WindowEvent)) -> Self
     {
         log::debug!("Setting window size");
         App {
@@ -72,6 +74,7 @@ impl<'a, State> App<'a, State> {
             state: None,
             init: Arc::new(init_func),
             render: Arc::new(render_func),
+            event: Arc::new(event_func)
         }
     }
 
@@ -79,15 +82,17 @@ impl<'a, State> App<'a, State> {
     pub fn from_canvas(
         canvas: wgpu::web_sys::HtmlCanvasElement,
         init_func: &'static dyn Fn(&mut App<State>) -> State,
-        render_func: &'static dyn Fn(&mut App<State>, &mut State) -> Self) -> Self 
+        render_func: &'static dyn Fn(&mut App<State>, &mut State),
+        event_func: &'static dyn Fn(&mut App<State>, &mut State, WindowEvent)) -> Self
     {
         log::debug!("Setting canvas size");
         App {
             initial_size: PhysicalSize::new(canvas.width(), canvas.height()),
             display: None,
             state: None,
-            init: init_func,
-            render: render_func,
+            init: Arc::new(init_func),
+            render: Arc::new(render_func),
+            event: Arc::new(event_func)
         }
     }
 }
@@ -119,6 +124,8 @@ impl<'a, State> ApplicationHandler for App<'a, State> {
     }
     
     fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
+        (Arc::clone(&self.event))(self, &mut self.state.clone().unwrap().lock().unwrap(), event.clone());
+
         match event {
             WindowEvent::CloseRequested
             | WindowEvent::KeyboardInput {
@@ -145,7 +152,7 @@ impl<'a, State> ApplicationHandler for App<'a, State> {
                     display.window.as_ref().request_redraw();
                 }
             }
-            _ => (),
-        }
+            _ => ()
+        };
     }
 }

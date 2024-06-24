@@ -35,6 +35,8 @@
 
                 libGL
                 vulkan-loader
+
+                renderdoc
               ];
               postInstall = crateName: ''
                   find $out -type f -exec sh -c '

@@ -16,6 +16,10 @@ path = "src/hello_triangle/main.rs"
 name = "spinning_cube"
 path = "src/spinning_cube/main.rs"
 
+[[bin]]
+name = "mandelbrot"
+path = "src/mandelbrot/main.rs"
+
 
 [dependencies]
 bytemuck = { version = "1.16.0", features = ["derive"] }

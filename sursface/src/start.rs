@@ -15,12 +15,13 @@ extern crate console_error_panic_hook;
 pub fn create_window_desktop<State: 'static>(
     window_size: winit::dpi::PhysicalSize<u32>, 
     init: &'static (dyn Fn(&mut App<State>) -> State), 
-    render: &'static (dyn Fn(&mut App<State>, &mut State))
-) {
+    render: &'static dyn Fn(&mut App<State>, &mut State),
+    event: &'static dyn Fn(&mut App<State>, &mut State, winit::event::WindowEvent))
+{
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);
 
-    let mut app = App::from_window_size(window_size, init, render);
+    let mut app = App::from_window_size(window_size, init, render, event);
     event_loop.run_app(&mut app).unwrap();
 }
 
@@ -29,11 +30,12 @@ pub fn create_window_desktop<State: 'static>(
 pub fn create_window_browser<State: 'static>(
     canvas: HtmlCanvasElement, 
     init: &'static (dyn Fn(&mut App<State>) -> State), 
-    render: &'static (dyn Fn(&mut App<State>, &mut State))
-) {
+    render: &'static dyn Fn(&mut App<State>, &mut State),
+    event: &'static dyn Fn(&mut App<State>, &mut State, winit::event::WindowEvent)) 
+{
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);
 
-    let mut app = App::from_canvas(canvas, init, render);
+    let mut app = App::from_canvas(window_size, init, render, event);
     event_loop.run_app(&mut app).unwrap();
 }

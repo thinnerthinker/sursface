@@ -1,6 +1,7 @@
 use std::time::Instant;
 use cube::{INDICES, VERTICES};
 use sursface::wgpu::{BindGroup, BindGroupLayout, Buffer, Device, Queue, RenderPass, Surface};
+use sursface::winit::event::WindowEvent;
 use sursface::{app::App, wgpu};
 use wgpu::{util::DeviceExt, Color, CommandEncoder, RenderPipeline, SurfaceTexture, TextureView};
 use cgmath::{Deg, Matrix4, Point3, Rad, Vector3, perspective};
@@ -17,7 +18,7 @@ use sursface::wasm_bindgen;
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
     use sursface::winit::dpi::PhysicalSize;
-    sursface::start::create_window_desktop(PhysicalSize::new(1280, 720), &init, &render);
+    sursface::start::create_window_desktop(PhysicalSize::new(1280, 720), &init, &render, &event);
 }
 
 
@@ -25,7 +26,7 @@ fn main() {
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn start_browser(canvas: sursface::wgpu::web_sys::HtmlCanvasElement) {
     use sursface::{start, wasm_bindgen};
-    start::create_window_browser(canvas, &init, &render);
+    start::create_window_browser(canvas, &init, &render, &event);
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -40,20 +41,17 @@ struct CubeState {
     index_buffer: Buffer,
     num_indices: u32,
     texture_bind_group: wgpu::BindGroup,
+    uniforms: Uniforms,
+    yaw: f64,
+    pitch: f64,
+    pan_speed: f64
 }
 
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Uniforms {
     model_view_proj: [[f32; 4]; 4],
-}
-
-impl From<Matrix4<f32>> for Uniforms {
-    fn from(m: Matrix4<f32>) -> Self {
-        Uniforms {
-            model_view_proj: m.into(),
-        }
-    }
+    camera_pan: [[f32; 4]; 4],
 }
 
 fn load_texture(device: &Device, queue: &Queue) -> (BindGroupLayout, BindGroup) {
@@ -149,7 +147,7 @@ fn load_texture(device: &Device, queue: &Queue) -> (BindGroupLayout, BindGroup) 
 fn create_uniforms(device: &Device) -> (Buffer, BindGroupLayout, BindGroup) {
     let uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("Uniform Buffer"),
-        contents: bytemuck::cast_slice(&[Uniforms::from(Matrix4::identity())]),
+        contents: bytemuck::cast_slice(&[Uniforms { model_view_proj: Matrix4::identity().into(), camera_pan: Matrix4::identity().into() }]),
         usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
     });
 
@@ -268,6 +266,10 @@ fn init(app: &mut App<CubeState>) -> CubeState {
         index_buffer,
         num_indices: 36,
         texture_bind_group,
+        uniforms: Uniforms { model_view_proj: Matrix4::identity().into(), camera_pan: Matrix4::identity().into() },
+        yaw: 0f64,
+        pitch: 0f64,
+        pan_speed: 0.3f64
     }
 }
 
@@ -304,8 +306,10 @@ fn render(app: &mut App<CubeState>, state: &mut CubeState) {
             let proj = perspective(Deg(45.0), aspect_ratio, 0.1, 10.0);
             let mvp = proj * view * model;
 
+            state.uniforms.model_view_proj = mvp.into();
+
             let queue = &display.queue;
-            queue.write_buffer(&state.uniform_buffer, 0, bytemuck::cast_slice(&[Uniforms::from(mvp)]));
+            queue.write_buffer(&state.uniform_buffer, 0, bytemuck::cast_slice(&[state.uniforms]));
 
             draw_cube(&mut rpass, &state.render_pipeline, &state.uniform_bind_group, &state.vertex_buffer, &state.index_buffer, state.num_indices, &state.texture_bind_group);
         }
@@ -365,4 +369,36 @@ pub fn draw_cube<'a>(
     rpass.set_vertex_buffer(0, vertex_buffer.slice(..));
     rpass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint16);
     rpass.draw_indexed(0..num_indices, 0, 0..1);
+}
+
+
+fn event<'a>(app: &mut App<CubeState>, state: &mut CubeState, event: WindowEvent) {
+    let mut x = 0f64;
+    let mut y = 0f64;
+    
+    let moved = {
+        match event {
+            WindowEvent::Touch(a) => {
+                x = a.location.x;
+                y = a.location.y;
+
+                true
+            }
+            WindowEvent::CursorMoved { device_id, position } => {
+                x = position.x;
+                y = position.y;
+
+                true
+            }
+            _ => false
+        }
+    };
+
+    if moved {
+        state.yaw = (x - state.yaw) * state.pan_speed;
+        state.pitch = -(y - state.pitch) * state.pan_speed;
+        
+        state.uniforms.camera_pan = (Matrix4::from_angle_y(Deg(state.yaw)) * Matrix4::from_angle_x(Deg(state.pitch)))
+            .cast().unwrap().into();
+    }
 }

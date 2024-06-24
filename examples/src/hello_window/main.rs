@@ -1,11 +1,11 @@
-use sursface::{app::App, wgpu};
+use sursface::{app::App, wgpu, winit::event::WindowEvent};
 #[cfg(target_arch = "wasm32")]
 use sursface::wasm_bindgen;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
     use sursface::winit::dpi::PhysicalSize;
-    sursface::start::create_window_desktop(PhysicalSize::new(1280, 720), &init, &render);
+    sursface::start::create_window_desktop(PhysicalSize::new(1280, 720), &init, &render, &event);
 }
 
 
@@ -13,7 +13,7 @@ fn main() {
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn start_browser(canvas: sursface::wgpu::web_sys::HtmlCanvasElement) {
     use sursface::{start, wasm_bindgen};
-    start::create_window_browser(canvas, &init, &render);
+    start::create_window_browser(canvas, &init, &render, &event);
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -75,3 +75,5 @@ fn present<'a>(app: &mut App<EmptyState>, output: sursface::wgpu::SurfaceTexture
     output.present();
     Ok(())
 }
+
+fn event<'a>(_app: &mut App<EmptyState>, _state: &mut EmptyState, _event: WindowEvent) {}

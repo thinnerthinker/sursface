@@ -1,9 +1,9 @@
-use sursface::{app::App, wgpu::{self, Color, CommandEncoder, RenderPass, RenderPipeline, Surface, SurfaceTexture, TextureView}};
+use sursface::{app::App, wgpu::{self, Color, CommandEncoder, RenderPass, RenderPipeline, Surface, SurfaceTexture, TextureView}, winit::event::WindowEvent};
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
-    use sursface::winit::dpi::PhysicalSize;
-    sursface::start::create_window_desktop(PhysicalSize::new(1280, 720), &init, &render);
+    use sursface::winit::{dpi::PhysicalSize, event};
+    sursface::start::create_window_desktop(PhysicalSize::new(1280, 720), &init, &render, &event);
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -15,7 +15,7 @@ fn main() {}
 pub fn start_browser(canvas: sursface::wgpu::web_sys::HtmlCanvasElement) {
     use sursface::{start, wasm_bindgen};
 
-    start::create_window_browser(canvas, &init, &render);
+    start::create_window_browser(canvas, &init, &render, &event);
 }
 
 struct TriangleState {
@@ -123,3 +123,6 @@ pub fn draw_triangle<'a>(
     rpass.set_pipeline(pipeline);
     rpass.draw(0..3, 0..1);
 }
+
+
+fn event<'a>(_app: &mut App<TriangleState>, _state: &mut TriangleState, _event: WindowEvent) {}
