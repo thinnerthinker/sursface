@@ -24,7 +24,6 @@ pub struct App<'a, State> {
 
 
 fn init_logger() {
-
     let base_level = log::LevelFilter::Info;
     let wgpu_level = log::LevelFilter::Error;
 
