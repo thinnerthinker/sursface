@@ -12,14 +12,14 @@ extern crate console_error_panic_hook;
 use super::display::Display;
 
 pub struct App<'a, State> {
-    pub display: Option<Display<'a>>,
+    pub display: Option<Arc<Mutex<Display<'a>>>>,
     pub initial_size: PhysicalSize<u32>,
     #[cfg(target_arch = "wasm32")]
     pub canvas: wgpu::web_sys::HtmlCanvasElement,
     pub state: Option<Arc<Mutex<State>>>,
-    pub init: Arc<dyn Fn(&mut App<State>) -> State>,
-    pub render: Arc<dyn Fn(&mut App<State>, &mut State)>,
-    pub event: Arc<dyn Fn(&mut App<State>, &mut State, WindowEvent)>,
+    pub init: Arc<dyn Fn(&mut Display) -> State>,
+    pub render: Arc<dyn Fn(&mut Display, &mut State)>,
+    pub event: Arc<dyn Fn(&mut Display, &mut State, WindowEvent)>,
 }
 
 
@@ -43,9 +43,9 @@ impl<'a, State> App<'a, State> {
     #[cfg(not(target_arch = "wasm32"))]
     pub fn from_window_size(
         size: PhysicalSize<u32>,
-        init_func: &'static dyn Fn(&mut App<State>) -> State,
-        render_func: &'static dyn Fn(&mut App<State>, &mut State),
-        event_func: &'static dyn Fn(&mut App<State>, &mut State, WindowEvent)) -> Self
+        init_func: &'static dyn Fn(&mut Display) -> State,
+        render_func: &'static dyn Fn(&mut Display, &mut State),
+        event_func: &'static dyn Fn( &mut Display, &mut State, WindowEvent)) -> Self
     {
         log::debug!("Setting window size");
         App {
@@ -61,9 +61,9 @@ impl<'a, State> App<'a, State> {
     #[cfg(target_arch = "wasm32")]
     pub fn from_canvas(
         canvas: wgpu::web_sys::HtmlCanvasElement,
-        init_func: &'static dyn Fn(&mut App<State>) -> State,
-        render_func: &'static dyn Fn(&mut App<State>, &mut State),
-        event_func: &'static dyn Fn(&mut App<State>, &mut State, WindowEvent)) -> Self
+        init_func: &'static dyn Fn(&mut Display) -> State,
+        render_func: &'static dyn Fn(&mut Display, &mut State),
+        event_func: &'static dyn Fn( &mut Display, &mut State, WindowEvent)) -> Self
     {
         log::debug!("Setting canvas size");
         App {
@@ -81,27 +81,31 @@ impl<'a, State> App<'a, State> {
 impl<'a, State> ApplicationHandler for App<'a, State> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         init_logger();
-        
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            self.display = Some(Display::from_window_size(event_loop, self.initial_size));
-        }
-        #[cfg(target_arch = "wasm32")]
-        {
-            self.display = Some(Display::from_canvas(event_loop, self.canvas.clone()));
-        }
 
+        // Temporarily create a display variable without assigning it to self.
+        let mut display = {
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                Display::from_window_size(event_loop, self.initial_size)
+            }
+            #[cfg(target_arch = "wasm32")]
+            {
+                Display::from_canvas(event_loop, self.canvas.clone())
+            }
+        };
+    
         let new_state = {
             let init_fn = Arc::clone(&self.init);
-            init_fn(self)
+            init_fn(&mut display)
         };
-
-        // Now, set the state with a mutable borrow
+    
+        self.display = Some(Arc::new(Mutex::new(display)));
         self.state = Some(Arc::new(Mutex::new(new_state)));
     }
     
     fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
-        (Arc::clone(&self.event))(self, &mut self.state.clone().unwrap().lock().unwrap(), event.clone());
+        let mut display = self.display.as_ref().unwrap().lock().unwrap();
+        (Arc::clone(&self.event))(&mut display, &mut self.state.clone().unwrap().lock().unwrap(), event.clone());
 
         match event {
             WindowEvent::CloseRequested
@@ -118,16 +122,19 @@ impl<'a, State> ApplicationHandler for App<'a, State> {
             }
             WindowEvent::Resized(physical_size) => {
                 log::debug!("Window resized: {:?}", physical_size);
-                if let Some(display) = self.display.as_mut() {
-                    display.resize(physical_size);
-                }
+                let mut display = self.display.as_ref().unwrap().lock().unwrap();
+                display.resize(physical_size);
             }
             WindowEvent::RedrawRequested => {
-                (Arc::clone(&self.render))(self, &mut self.state.clone().unwrap().lock().unwrap());
-
-                if let Some(display) = self.display.as_mut() {
-                    display.window.as_ref().request_redraw();
+                {
+                    let mut state_guard = self.state.as_ref().unwrap().lock().unwrap();
+                    let mut display = self.display.as_ref().unwrap().lock().unwrap();
+                    (Arc::clone(&self.render))(&mut display, &mut state_guard);
                 }
+            
+                let display = self.display.as_ref().unwrap().lock().unwrap();
+                display.window.as_ref().request_redraw();
+                
             }
             _ => ()
         };

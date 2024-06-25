@@ -2049,6 +2049,7 @@ checksum = "6637bab7722d379c8b41ba849228d680cc12d0a45ba1fa2b48f2a30577a06731"
 name = "sursface"
 version = "0.1.0"
 dependencies = [
+ "bytemuck",
  "cgmath",
  "console_error_panic_hook",
  "console_log",
@@ -2057,7 +2058,6 @@ dependencies = [
  "image",
  "log",
  "pollster",
- "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
  "web-time",
