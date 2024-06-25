@@ -13,7 +13,6 @@ It builds upon well-established APIs (`wgpu` and `winit`) to wrap over the core 
 - **Event Loop**: Sursface abstracts away the specifics of the event loop, whether it's running on desktop or in the browser. You simply need to provide the function pointer to your frame-by-frame logic, and Sursface will regularly call it for you.
 - **No New Tech**: Once the setup is done, keep using `wgpu` as if `sursface` wasn't there.
 - **Default Logic (WIP)**: Sursface will offer opt-in shortcuts for some elementary operations through simple functions, further reducing graphical boilerplate.
-- **C-friendly API (WIP)**: Designed with simplicity in mind, Sursface can be mapped one-to-one to C.
 
 ## Building Sursface
 
