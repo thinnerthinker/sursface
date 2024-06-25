@@ -1,5 +1,6 @@
 use std::time::Instant;
 use cube::{INDICES, VERTICES};
+use sursface::time::now;
 use sursface::wgpu::{BindGroup, BindGroupLayout, Buffer, Device, Queue, RenderPass, Surface};
 use sursface::winit::event::WindowEvent;
 use sursface::{app::App, wgpu};
@@ -34,7 +35,7 @@ fn main() {}
 
 struct CubeState {
     render_pipeline: RenderPipeline,
-    start_time: Instant,
+    start_time: f32,
     uniform_buffer: wgpu::Buffer,
     uniform_bind_group: wgpu::BindGroup,
     vertex_buffer: Buffer,
@@ -43,8 +44,7 @@ struct CubeState {
     texture_bind_group: wgpu::BindGroup,
     uniforms: Uniforms,
     yaw: f64,
-    pitch: f64,
-    pan_speed: f64
+    pitch: f64
 }
 
 #[repr(C)]
@@ -243,7 +243,7 @@ fn init(app: &mut App<CubeState>) -> CubeState {
         multiview: None,
     });
 
-    let start_time = Instant::now();
+    let start_time = now();
 
     let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("Vertex Buffer"),
@@ -269,7 +269,6 @@ fn init(app: &mut App<CubeState>) -> CubeState {
         uniforms: Uniforms { model_view_proj: Matrix4::identity().into(), camera_pan: Matrix4::identity().into() },
         yaw: 0f64,
         pitch: 0f64,
-        pan_speed: 0.3f64
     }
 }
 
@@ -295,11 +294,12 @@ fn render(app: &mut App<CubeState>, state: &mut CubeState) {
 
             let display = app.display.as_ref().unwrap();
 
-            let now = Instant::now();
-            let elapsed = (now - state.start_time).as_secs_f32();
+            let now = now();
+            let elapsed = now - state.start_time;
+            log::info!("{} {}", now, elapsed);
             let aspect_ratio = app.display.as_ref().unwrap().config.width as f32 / app.display.as_ref().unwrap().config.height as f32;
             
-            let model = Matrix4::from_angle_y(Rad(elapsed));
+            let model = Matrix4::identity();
             log::debug!("{}", elapsed);
 
             let view = Matrix4::look_at_rh(Point3::new(3.0, 3.0, 3.0), Point3::new(0.0, 0.0, 0.0), Vector3::unit_y());
@@ -395,8 +395,8 @@ fn event<'a>(_app: &mut App<CubeState>, state: &mut CubeState, event: WindowEven
     };
 
     if moved {
-        state.yaw = (x - state.yaw) * state.pan_speed;
-        state.pitch = -(y - state.pitch) * state.pan_speed;
+        state.yaw = x;
+        state.pitch = -y;
         
         state.uniforms.camera_pan = (Matrix4::from_angle_y(Deg(state.yaw)) * Matrix4::from_angle_x(Deg(state.pitch)))
             .cast().unwrap().into();

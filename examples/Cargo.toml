@@ -13,8 +13,8 @@ name = "hello_triangle"
 path = "src/hello_triangle/main.rs"
 
 [[bin]]
-name = "spinning_cube"
-path = "src/spinning_cube/main.rs"
+name = "cube_camera"
+path = "src/cube_camera/main.rs"
 
 [[bin]]
 name = "mandelbrot"
