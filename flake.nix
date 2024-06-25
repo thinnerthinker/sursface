@@ -85,6 +85,7 @@
               postInstall = crateName: ''
                 mkdir $out/bindgen
                 find $out/bin -type f -name "*.wasm" -exec wasm-bindgen {} --out-dir $out/bindgen --web \;
+                find $out/lib -type f -name "*.wasm" -exec wasm-bindgen {} --out-dir $out/bindgen --web \;
               '';
               inherit buildFilePatterns;
               env = {

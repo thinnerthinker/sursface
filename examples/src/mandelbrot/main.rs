@@ -5,7 +5,8 @@ use sursface::winit::dpi::PhysicalPosition;
 use sursface::winit::event::{ElementState, MouseButton, WindowEvent};
 use sursface::{app::App, wgpu};
 use viewport::INDICES;
-use cgmath::{Vector2, Zero};
+use sursface::cgmath::{Vector2, Zero};
+use bytemuck::{Pod,Zeroable};
 
 #[cfg(target_arch = "wasm32")]
 use sursface::wasm_bindgen;
@@ -48,7 +49,7 @@ struct MandelbrotState {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Copy, Clone, Pod, Zeroable)]
 pub struct Uniforms {
     translation: [f32; 2],
     cursor_pos: [f32; 2],
@@ -196,12 +197,9 @@ fn render(app: &mut App<MandelbrotState>, state: &mut MandelbrotState) {
 
     if (now() - state.last_pressed_down) > 0.5f32 {
         state.zooming = true;
-        log::info!("hads")
     }
 
     if state.zooming && state.panning {
-        log::info!("hoshiiiii");
-
         let old_scale = state.uniforms.scale;
         state.uniforms.scale *= state.scale_speed.powf(dt as f32);
 
@@ -311,11 +309,9 @@ fn event<'a>(app: &mut App<MandelbrotState>, state: &mut MandelbrotState, event:
                 state.panning = true;
                 state.last_pressed_down = now();
                 state.last_cursor_location = state.cursor_location;
-                log::info!("hoshi");
             } else if elem_state == ElementState::Released && button == MouseButton::Left {
                 state.panning = false;
                 state.zooming = false;
-                log::info!("yoshi");
             }
         }
         _ => {}

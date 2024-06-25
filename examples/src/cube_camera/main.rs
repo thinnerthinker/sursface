@@ -5,9 +5,9 @@ use sursface::wgpu::{BindGroup, BindGroupLayout, Buffer, Device, Queue, RenderPa
 use sursface::winit::event::WindowEvent;
 use sursface::{app::App, wgpu};
 use wgpu::{util::DeviceExt, Color, CommandEncoder, RenderPipeline, SurfaceTexture, TextureView};
-use cgmath::{Deg, Matrix4, Point3, Rad, Vector3, perspective};
-use cgmath::SquareMatrix;
-use image::{GenericImageView, ImageFormat};
+use sursface::cgmath::{Deg, Matrix4, Point3, Rad, Vector3, perspective};
+use sursface::cgmath::SquareMatrix;
+use sursface::image::{GenericImageView, ImageFormat};
 
 use crate::cube::Vertex;
 
@@ -56,7 +56,7 @@ pub struct Uniforms {
 
 fn load_texture(device: &Device, queue: &Queue) -> (BindGroupLayout, BindGroup) {
     let image_bytes = include_bytes!("assets/dice.png");
-    let img = image::load(std::io::Cursor::new(image_bytes.as_ref()), ImageFormat::Png).unwrap();
+    let img = sursface::image::load(std::io::Cursor::new(image_bytes.as_ref()), ImageFormat::Png).unwrap();
     let rgba = img.to_rgba8();
     let dimensions = img.dimensions();
 
@@ -296,11 +296,10 @@ fn render(app: &mut App<CubeState>, state: &mut CubeState) {
 
             let now = now();
             let elapsed = now - state.start_time;
-            log::info!("{} {}", now, elapsed);
+            sursface::log::info!("{} {}", now, elapsed);
             let aspect_ratio = app.display.as_ref().unwrap().config.width as f32 / app.display.as_ref().unwrap().config.height as f32;
             
             let model = Matrix4::identity();
-            log::debug!("{}", elapsed);
 
             let view = Matrix4::look_at_rh(Point3::new(3.0, 3.0, 3.0), Point3::new(0.0, 0.0, 0.0), Vector3::unit_y());
             let proj = perspective(Deg(45.0), aspect_ratio, 0.1, 10.0);
