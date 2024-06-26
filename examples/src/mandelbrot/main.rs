@@ -164,12 +164,14 @@ fn init(display: &mut Display) -> MandelbrotState {
 
 fn render(display: &mut Display, state: &mut MandelbrotState) {
     let mut dt = now_secs() - state.last_timestep;
-    state.last_timestep = now_secs();
-    state.uniforms.aspect_ratio = display.config.width as f32 / display.config.height as f32;
-
     #[cfg(target_arch = "wasm32")] {
         dt *= -1f32;
     }
+    
+    state.last_timestep = now_secs();
+    state.uniforms.aspect_ratio = display.config.width as f32 / display.config.height as f32;
+
+    
 
     let clear_color = Color {
         r: 100.0 / 255.0,
