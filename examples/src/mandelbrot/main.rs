@@ -165,7 +165,7 @@ fn init(display: &mut Display) -> MandelbrotState {
 fn render(display: &mut Display, state: &mut MandelbrotState) {
     let mut dt = now_secs() - state.last_timestep;
     #[cfg(target_arch = "wasm32")] {
-        dt *= -1f32;
+        dt *= -1000f32;
     }
 
     state.last_timestep = now_secs();
