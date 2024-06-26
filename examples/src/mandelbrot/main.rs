@@ -72,14 +72,16 @@ struct MandelbrotState {
 #[repr(C)]
 #[derive(Copy, Clone, Pod, Zeroable)]
 pub struct Uniforms {
-    translation: [f32; 2],
-    cursor_pos: [f32; 2], 
-    scale: f32,           
-    _padding: [f32; 3],   
+    translation: [f32; 2], // 8 bytes
+    cursor_pos: [f32; 2],  // 8 bytes
+    scale: f32,            // 4 bytes
+    aspect_ratio: f32,     // 4 bytes
+    _padding: [f32; 2],    // 8 bytes to make the struct size 32 bytes
 }
 
 fn init(display: &mut Display) -> MandelbrotState {
     let device = &display.device;
+    let aspect_ratio = display.config.width as f32 / display.config.height as f32;
 
     let shader = create_shader(device, include_str!("assets/shader.wgsl"));
     let (uniform_buffer, uniform_bind_group_layout, uniform_bind_group) = create_uniforms(
@@ -88,7 +90,8 @@ fn init(display: &mut Display) -> MandelbrotState {
             translation: Vector2::zero().into(),
             cursor_pos: Vector2::zero().into(),
             scale: 4.0,
-            _padding: [0f32, 0f32, 0f32]
+            aspect_ratio,
+            _padding: [0.0; 2]
         },
         0,
     );
@@ -144,7 +147,8 @@ fn init(display: &mut Display) -> MandelbrotState {
             translation: Vector2::zero().into(),
             cursor_pos: Vector2::zero().into(),
             scale: 4.0,
-            _padding: [0f32, 0f32, 0f32]
+            aspect_ratio,
+            _padding: [0.0; 2],
         },
         scale_speed: 1.0 - 0.001,
         last_cursor_location: PhysicalPosition::new(0.0, 0.0),
@@ -161,6 +165,7 @@ fn init(display: &mut Display) -> MandelbrotState {
 fn render(display: &mut Display, state: &mut MandelbrotState) {
     let dt = now() - state.last_timestep;
     state.last_timestep = now();
+    state.uniforms.aspect_ratio = display.config.width as f32 / display.config.height as f32;
 
     let clear_color = Color {
         r: 100.0 / 255.0,
