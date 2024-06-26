@@ -265,7 +265,7 @@ fn event<'a>(display: &mut Display, state: &mut MandelbrotState, event: WindowEv
                 state.last_cursor_location = state.cursor_location;
                 match state.interaction_state.clone() {
                     InteractionState::Idle { last_pressed_down_at, pre_tap } => {
-                        if pre_tap {
+                        if pre_tap && now_secs() - last_pressed_down_at > 1.0f32 {
                             InteractionState::ZoomingOut
                         } else {
                             InteractionState::PanningIdle { pressed_down_at: now_secs(), pre_tap: false }
