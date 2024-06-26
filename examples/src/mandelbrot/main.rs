@@ -75,7 +75,7 @@ pub struct Uniforms {
     translation: [f32; 2],
     cursor_pos: [f32; 2], 
     scale: f32,           
-    _padding1: f32,       
+    _padding: [f32; 3],   
 }
 
 fn init(display: &mut Display) -> MandelbrotState {
@@ -88,7 +88,7 @@ fn init(display: &mut Display) -> MandelbrotState {
             translation: Vector2::zero().into(),
             cursor_pos: Vector2::zero().into(),
             scale: 4.0,
-            _padding1: 0.0
+            _padding: [0f32, 0f32, 0f32]
         },
         0,
     );
@@ -144,7 +144,7 @@ fn init(display: &mut Display) -> MandelbrotState {
             translation: Vector2::zero().into(),
             cursor_pos: Vector2::zero().into(),
             scale: 4.0,
-            _padding1: 0.0,
+            _padding: [0f32, 0f32, 0f32]
         },
         scale_speed: 1.0 - 0.001,
         last_cursor_location: PhysicalPosition::new(0.0, 0.0),
