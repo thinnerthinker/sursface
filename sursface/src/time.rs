@@ -30,7 +30,10 @@ pub fn now_secs() -> f32 {
     }
     #[cfg(target_arch = "wasm32")]
     {
-        let elapsed = performance_now() - *START_TIME;
+        let window = web_sys::window().expect("should have a window in this context");
+        let performance = window.performance().unwrap();
+            
+        let elapsed = performance.now() - *START_TIME;
         (elapsed / 1000.0) as f32 // Convert milliseconds to seconds
     }
 }
