@@ -98,16 +98,12 @@ impl SubAssign<Duration> for Instant {
 use lazy_static::lazy_static;
 
 lazy_static! {
-    static ref START_TIME: Instant = Instant::now();
+    static ref START_TIME: std::time::Instant = std::time::Instant::now();
 }
 
 pub fn now() -> f32 {
-    let current_time = Instant::now().0;
-
-    // Calculate elapsed time in seconds since the start time
-    let elapsed_time = current_time - START_TIME.0;
-
-    elapsed_time.as_secs_f64() as f32 // Convert to f32 explicitly
+    let current_time = std::time::Instant::now();
+    current_time.duration_since(*START_TIME).as_secs_f64() as f32 // Convert to f32 explicitly
 }
 
 fn main() {
