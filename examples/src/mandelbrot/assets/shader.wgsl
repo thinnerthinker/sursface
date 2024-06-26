@@ -2,7 +2,6 @@ struct Uniforms {
     translation: vec2<f32>,
     cursor_pos: vec2<f32>,
     scale: f32,
-    _padding1: f32,
 };
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;

@@ -72,10 +72,10 @@ struct MandelbrotState {
 #[repr(C)]
 #[derive(Copy, Clone, Pod, Zeroable)]
 pub struct Uniforms {
-    translation: [f32; 2], // 8 bytes
-    cursor_pos: [f32; 2],  // 8 bytes
-    scale: f32,            // 4 bytes
-    _padding1: f32,        // 4 bytes
+    translation: [f32; 2],
+    cursor_pos: [f32; 2], 
+    scale: f32,           
+    _padding1: f32,       
 }
 
 fn init(display: &mut Display) -> MandelbrotState {
