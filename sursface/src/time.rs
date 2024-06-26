@@ -1,6 +1,6 @@
 #![allow(dead_code, unused_imports)]
 
-use wasm_bindgen_futures::wasm_bindgen;
+use wasm_bindgen::prelude::*;
 use wasm_timer::{Instant};
 use std::convert::TryInto;
 use std::ops::{Add, Sub, AddAssign, SubAssign};
@@ -13,7 +13,14 @@ lazy_static! {
 
 #[cfg(target_arch = "wasm32")]
 lazy_static! {
-    static ref START_TIME: wasm_timer::SystemTime = wasm_timer::SystemTime::now();
+    static ref START_TIME: f64 = performance_now();
+}
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = performance)]
+    fn performance_now() -> f64;
 }
 
 pub fn now_secs() -> f32 {
@@ -23,7 +30,7 @@ pub fn now_secs() -> f32 {
     }
     #[cfg(target_arch = "wasm32")]
     {
-        let elapsed = wasm_timer::SystemTime::now().duration_since(*START_TIME).unwrap();
-        (elapsed.as_secs() as f32 + elapsed.subsec_millis() as f32 / 1000.0) * 10f32
+        let elapsed = performance_now() - *START_TIME;
+        (elapsed / 1000.0) as f32 // Convert milliseconds to seconds
     }
 }
