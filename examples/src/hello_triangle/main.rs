@@ -1,8 +1,8 @@
-use sursface::{display::Display, std::{clear_screen, create_render_pipeline, create_shader}, wgpu::{self, Color, CommandEncoder, RenderPass, RenderPipeline, Surface, SurfaceTexture, TextureView}, winit::event::WindowEvent};
+use sursface::{app::App, display::{self, Display}, std::{clear_screen, create_render_pipeline, create_shader, get_framebuffer}, wgpu::{self, Color, CommandEncoder, RenderPass, RenderPipeline, Surface, SurfaceTexture, TextureView}, winit::event::WindowEvent};
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
-    use sursface::winit::dpi::PhysicalSize;
+    use sursface::winit::{dpi::PhysicalSize, event};
     sursface::start::create_window_desktop(PhysicalSize::new(1280, 720), &init, &render, &event);
 }
 
@@ -11,7 +11,7 @@ fn main() {}
 
 
 #[cfg(target_arch = "wasm32")]
-#[sursface::wasm_bindgen::prelude::wasm_bindgen]
+#[wasm_bindgen::prelude::wasm_bindgen]
 pub fn start_browser(canvas: sursface::wgpu::web_sys::HtmlCanvasElement) {
     use sursface::start;
 
@@ -23,6 +23,8 @@ struct TriangleState {
 }
 
 fn init(display: &mut Display) -> TriangleState {
+    use std::borrow::Cow;
+    
     let device = &display.device;
 
     let shader = create_shader(device, include_str!("assets/shader.wgsl"));
@@ -32,7 +34,7 @@ fn init(display: &mut Display) -> TriangleState {
         bind_group_layouts: &[],
         push_constant_ranges: &[],
     });
-
+    
     let render_pipeline = create_render_pipeline(display, pipeline_layout, shader, &[]);
     TriangleState { render_pipeline }
 }
@@ -45,7 +47,9 @@ fn render(display: &mut Display, state: &mut TriangleState) {
         a: 255.0 / 255.0,
     };
 
-    let mut encoder = display.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+    let device = &display.device;
+
+    let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
         label: Some("Encoder"),
     });
 
@@ -59,12 +63,6 @@ fn render(display: &mut Display, state: &mut TriangleState) {
     output.present();
 }
 
-fn get_framebuffer(surface: &Surface) -> (SurfaceTexture, TextureView) {
-    let output = surface.get_current_texture().unwrap();
-    let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
-    (output, view)
-}
-
 pub fn draw_triangle<'a>(
     rpass: &mut wgpu::RenderPass<'a>,
     pipeline: &'a RenderPipeline,
@@ -72,6 +70,5 @@ pub fn draw_triangle<'a>(
     rpass.set_pipeline(pipeline);
     rpass.draw(0..3, 0..1);
 }
-
 
 fn event<'a>(_display: &mut Display, _state: &mut TriangleState, _event: WindowEvent) {}
