@@ -1,6 +1,4 @@
-use sursface::{app::App, wgpu, winit::event::WindowEvent};
-#[cfg(target_arch = "wasm32")]
-use sursface::wasm_bindgen;
+use sursface::{display::Display, std::{clear_screen, get_framebuffer}, wgpu, winit::event::WindowEvent};
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
@@ -23,57 +21,28 @@ fn main() {}
 #[derive(Clone)]
 struct EmptyState {}
 
-fn init<'a>(_app: &mut App<EmptyState>) -> EmptyState {
+fn init<'a>(_display: &mut Display) -> EmptyState {
     EmptyState {}
 }
 
-fn render<'a>(app: &mut App<EmptyState>, _state: &mut EmptyState) {
-    let output = clear_screen(app, wgpu::Color {
+fn render<'a>(display: &mut Display, _state: &mut EmptyState) {
+    let clear_color = wgpu::Color {
         r: 100.0 / 255.0,
         g: 149.0 / 255.0,
         b: 237.0 / 255.0,
         a: 1.0,
-    }).unwrap();
-    let _ = present(app, output);
-}
+    };
+    
+    let mut encoder = display.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+        label: Some("Encoder"),
+    });
 
+    let (output, view) = get_framebuffer(&display.surface);
+    {
+        let mut _rpass = clear_screen(&view, &mut encoder, clear_color);
+    }
 
-fn clear_screen<'a>(app: &mut App<EmptyState>, color: sursface::wgpu::Color) -> Result<wgpu::SurfaceTexture, wgpu::SurfaceError> {
-    let display = app.display.as_ref().unwrap();
-    let output = display.surface.get_current_texture()?;
-        let view = output
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
-
-        let mut encoder = display.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("Clear Screen Encoder"),
-        });
-
-        {
-            let _render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Render Pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &view,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(color),
-                        store: wgpu::StoreOp::Store,
-                    },
-                })],
-                depth_stencil_attachment: None,
-                occlusion_query_set: None,
-                timestamp_writes: None,
-            });
-        }
-
-        display.queue.submit(std::iter::once(encoder.finish()));
-
-        Ok(output)
-}
-
-fn present<'a>(_app: &mut App<EmptyState>, output: sursface::wgpu::SurfaceTexture) -> Result<(), wgpu::SurfaceError> {
     output.present();
-    Ok(())
 }
 
-fn event<'a>(_app: &mut App<EmptyState>, _state: &mut EmptyState, _event: WindowEvent) {}
+fn event<'a>(_display: &mut Display, _state: &mut EmptyState, _event: WindowEvent) {}
