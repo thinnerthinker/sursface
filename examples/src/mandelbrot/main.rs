@@ -183,7 +183,7 @@ fn render(display: &mut Display, state: &mut MandelbrotState) {
     state.interaction_state = match state.interaction_state.clone() {
         InteractionState::PanningIdle { pressed_down_at, pre_tap } => {
             log::info!("{} {}", now_secs(), pressed_down_at);
-            if now_secs() - pressed_down_at > 0.3f32 {
+            if now_secs() - pressed_down_at > 1f32 {
                 log::info!("zooming {}", now_secs());
                 InteractionState::Zooming
             } else {
