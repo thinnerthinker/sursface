@@ -24,6 +24,6 @@ pub fn now_secs() -> f32 {
     #[cfg(target_arch = "wasm32")]
     {
         let elapsed = wasm_timer::SystemTime::now().duration_since(*START_TIME).unwrap();
-        elapsed.as_secs() as f32 + elapsed.subsec_millis() as f32 / 1000.0
+        (elapsed.as_secs() as f32 + elapsed.subsec_millis() as f32 / 1000.0) * 10f32
     }
 }
