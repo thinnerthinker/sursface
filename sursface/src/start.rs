@@ -4,9 +4,7 @@ use winit::event_loop::{ControlFlow, EventLoop};
 use wgpu::web_sys::HtmlCanvasElement;
 
 use crate::app::App;
-
-#[cfg(not(target_arch = "wasm32"))]
-use pollster;
+use crate::display::Display;
 
 #[cfg(target_arch = "wasm32")]
 extern crate console_error_panic_hook;
@@ -14,10 +12,11 @@ extern crate console_error_panic_hook;
 #[cfg(not(target_arch = "wasm32"))]
 pub fn create_window_desktop<State: 'static>(
     window_size: winit::dpi::PhysicalSize<u32>, 
-    init: &'static (dyn Fn(&mut App<State>) -> State), 
-    render: &'static dyn Fn(&mut App<State>, &mut State),
-    event: &'static dyn Fn(&mut App<State>, &mut State, winit::event::WindowEvent))
+    init: &'static (dyn Fn(&mut Display) -> State), 
+    render: &'static dyn Fn(&mut Display, &mut State),
+    event: &'static dyn Fn(&mut Display, &mut State, winit::event::WindowEvent))
 {
+
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);
 
@@ -29,9 +28,9 @@ pub fn create_window_desktop<State: 'static>(
 #[cfg(target_arch = "wasm32")]
 pub fn create_window_browser<State: 'static>(
     canvas: HtmlCanvasElement, 
-    init: &'static (dyn Fn(&mut App<State>) -> State), 
-    render: &'static dyn Fn(&mut App<State>, &mut State),
-    event: &'static dyn Fn(&mut App<State>, &mut State, winit::event::WindowEvent)) 
+    init: &'static (dyn Fn(&mut Display) -> State), 
+    render: &'static dyn Fn(&mut Display, &mut State),
+    event: &'static dyn Fn(&mut Display, &mut State, winit::event::WindowEvent)) 
 {
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);

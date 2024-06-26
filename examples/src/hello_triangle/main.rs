@@ -1,8 +1,8 @@
-use sursface::{app::App, wgpu::{self, Color, CommandEncoder, RenderPass, RenderPipeline, Surface, SurfaceTexture, TextureView}, winit::event::WindowEvent};
+use sursface::{display::Display, wgpu::{self, Color, CommandEncoder, RenderPass, RenderPipeline, Surface, SurfaceTexture, TextureView}, winit::event::WindowEvent};
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
-    use sursface::winit::{dpi::PhysicalSize, event};
+    use sursface::winit::dpi::PhysicalSize;
     sursface::start::create_window_desktop(PhysicalSize::new(1280, 720), &init, &render, &event);
 }
 
@@ -22,10 +22,9 @@ struct TriangleState {
     render_pipeline: RenderPipeline,
 }
 
-fn init(app: &mut App<TriangleState>) -> TriangleState {
+fn init(display: &mut Display) -> TriangleState {
     use std::borrow::Cow;
     
-    let display = app.display.as_ref().unwrap();
     let device = &display.device;
 
     let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
@@ -63,15 +62,13 @@ fn init(app: &mut App<TriangleState>) -> TriangleState {
     TriangleState { render_pipeline }
 }
 
-fn render(app: &mut App<TriangleState>, state: &mut TriangleState) {
+fn render(display: &mut Display, state: &mut TriangleState) {
     let clear_color = Color {
         r: 100.0 / 255.0,
         g: 149.0 / 255.0,
         b: 237.0 / 255.0,
         a: 255.0 / 255.0,
     };
-
-    let display = app.display.as_ref().unwrap();
 
     let mut encoder = display.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
         label: Some("Encoder"),
@@ -125,4 +122,4 @@ pub fn draw_triangle<'a>(
 }
 
 
-fn event<'a>(_app: &mut App<TriangleState>, _state: &mut TriangleState, _event: WindowEvent) {}
+fn event<'a>(_display: &mut Display, _state: &mut TriangleState, _event: WindowEvent) {}

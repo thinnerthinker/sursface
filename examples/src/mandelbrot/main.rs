@@ -1,3 +1,4 @@
+use sursface::display::Display;
 use sursface::time::now;
 use sursface::wgpu::util::DeviceExt;
 use sursface::wgpu::{BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingType, Buffer, BufferAddress, BufferBindingType, BufferUsages, Color, CommandEncoder, CommandEncoderDescriptor, Device, Face, FragmentState, FrontFace, IndexFormat, LoadOp, MultisampleState, Operations, PipelineLayoutDescriptor, PolygonMode, PrimitiveState, PrimitiveTopology, RenderPass, RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, ShaderModuleDescriptor, ShaderSource, ShaderStages, StoreOp, Surface, SurfaceTexture, TextureView, TextureViewDescriptor, VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode};
@@ -90,10 +91,9 @@ fn create_uniforms(device: &Device) -> (Buffer, BindGroupLayout, BindGroup) {
     (uniform_buffer, uniform_bind_group_layout, uniform_bind_group)
 }
 
-fn init(app: &mut App<MandelbrotState>) -> MandelbrotState {
+fn init(display: &mut Display) -> MandelbrotState {
     use std::borrow::Cow;
 
-    let display = app.display.as_ref().unwrap();
     let device = &display.device;
 
     let shader = device.create_shader_module(ShaderModuleDescriptor {
@@ -184,7 +184,7 @@ fn init(app: &mut App<MandelbrotState>) -> MandelbrotState {
     }
 }
 
-fn render(app: &mut App<MandelbrotState>, state: &mut MandelbrotState) {
+fn render(display: &mut Display, state: &mut MandelbrotState) {
     let dt = now() - state.last_timestep;
     state.last_timestep = now();
 
@@ -203,7 +203,7 @@ fn render(app: &mut App<MandelbrotState>, state: &mut MandelbrotState) {
         let old_scale = state.uniforms.scale;
         state.uniforms.scale *= state.scale_speed.powf(dt as f32);
 
-        let display = app.display.as_ref().unwrap();
+        
         let aspect_ratio = display.config.width as f32 / display.config.height as f32;
 
         let cursor_world = Vector2::new(
@@ -216,7 +216,7 @@ fn render(app: &mut App<MandelbrotState>, state: &mut MandelbrotState) {
     }
 
     let output = {
-        let display = app.display.as_ref().unwrap();
+        
 
         let mut encoder = display.device.create_command_encoder(&CommandEncoderDescriptor {
             label: Some("Encoder"),
@@ -285,13 +285,13 @@ fn draw_mandelbrot<'a>(
     rpass.draw_indexed(0..INDICES.len() as u32, 0, 0..1);
 }
 
-fn event<'a>(app: &mut App<MandelbrotState>, state: &mut MandelbrotState, event: WindowEvent) {
+fn event<'a>(display: &mut Display, state: &mut MandelbrotState, event: WindowEvent) {
     match event {
         WindowEvent::CursorMoved { position, .. } => {
             state.cursor_location = PhysicalPosition { x: position.x as f32, y: position.y as f32 };
             if state.panning {
-                let dx = (state.cursor_location.x - state.last_cursor_location.x) / app.display.as_ref().unwrap().size.width as f32;
-                let dy = (state.cursor_location.y - state.last_cursor_location.y) / app.display.as_ref().unwrap().size.height as f32;
+                let dx = (state.cursor_location.x - state.last_cursor_location.x) / display.size.width as f32;
+                let dy = (state.cursor_location.y - state.last_cursor_location.y) / display.size.height as f32;
                 state.uniforms.translation[0] -= dx;
                 state.uniforms.translation[1] += dy;
             }

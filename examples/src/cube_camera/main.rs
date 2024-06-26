@@ -1,5 +1,6 @@
 use std::time::Instant;
 use cube::{INDICES, VERTICES};
+use sursface::display::Display;
 use sursface::time::now;
 use sursface::wgpu::{BindGroup, BindGroupLayout, Buffer, Device, Queue, RenderPass, Surface};
 use sursface::winit::event::WindowEvent;
@@ -177,10 +178,9 @@ fn create_uniforms(device: &Device) -> (Buffer, BindGroupLayout, BindGroup) {
     (uniform_buffer, uniform_bind_group_layout, uniform_bind_group)
 }
 
-fn init(app: &mut App<CubeState>) -> CubeState {
+fn init(display: &mut Display) -> CubeState {
     use std::borrow::Cow;
 
-    let display = app.display.as_ref().unwrap();
     let device = &display.device;
 
     let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
@@ -272,7 +272,7 @@ fn init(app: &mut App<CubeState>) -> CubeState {
     }
 }
 
-fn render(app: &mut App<CubeState>, state: &mut CubeState) {
+fn render(display: &mut Display, state: &mut CubeState) {
     let clear_color = Color {
         r: 100.0 / 255.0,
         g: 149.0 / 255.0,
@@ -281,8 +281,6 @@ fn render(app: &mut App<CubeState>, state: &mut CubeState) {
     };
 
     let output = {
-        let display = app.display.as_ref().unwrap();
-
         let mut encoder = display.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
             label: Some("Encoder"),
         });
@@ -292,12 +290,10 @@ fn render(app: &mut App<CubeState>, state: &mut CubeState) {
         {
             let mut rpass = clear_screen(&view, &mut encoder, clear_color);
 
-            let display = app.display.as_ref().unwrap();
-
             let now = now();
             let elapsed = now - state.start_time;
             sursface::log::info!("{} {}", now, elapsed);
-            let aspect_ratio = app.display.as_ref().unwrap().config.width as f32 / app.display.as_ref().unwrap().config.height as f32;
+            let aspect_ratio = display.config.width as f32 / display.config.height as f32;
             
             let model = Matrix4::identity();
 
@@ -314,7 +310,6 @@ fn render(app: &mut App<CubeState>, state: &mut CubeState) {
         }
 
         {
-            let display = app.display.as_ref().unwrap();
             display.queue.submit(std::iter::once(encoder.finish()));
         }
 
@@ -371,7 +366,7 @@ pub fn draw_cube<'a>(
 }
 
 
-fn event<'a>(_app: &mut App<CubeState>, state: &mut CubeState, event: WindowEvent) {
+fn event<'a>(_display: &mut Display, state: &mut CubeState, event: WindowEvent) {
     let mut x = 0f64;
     let mut y = 0f64;
     

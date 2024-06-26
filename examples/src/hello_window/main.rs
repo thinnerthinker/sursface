@@ -1,4 +1,4 @@
-use sursface::{app::App, wgpu, winit::event::WindowEvent};
+use sursface::{display::Display, wgpu, winit::event::WindowEvent};
 #[cfg(target_arch = "wasm32")]
 use sursface::wasm_bindgen;
 
@@ -23,23 +23,22 @@ fn main() {}
 #[derive(Clone)]
 struct EmptyState {}
 
-fn init<'a>(_app: &mut App<EmptyState>) -> EmptyState {
+fn init<'a>(_display: &mut Display) -> EmptyState {
     EmptyState {}
 }
 
-fn render<'a>(app: &mut App<EmptyState>, _state: &mut EmptyState) {
-    let output = clear_screen(app, wgpu::Color {
+fn render<'a>(display: &mut Display, _state: &mut EmptyState) {
+    let output = clear_screen(display, wgpu::Color {
         r: 100.0 / 255.0,
         g: 149.0 / 255.0,
         b: 237.0 / 255.0,
         a: 1.0,
     }).unwrap();
-    let _ = present(app, output);
+    output.present();
 }
 
 
-fn clear_screen<'a>(app: &mut App<EmptyState>, color: sursface::wgpu::Color) -> Result<wgpu::SurfaceTexture, wgpu::SurfaceError> {
-    let display = app.display.as_ref().unwrap();
+fn clear_screen<'a>(display: &mut Display, color: sursface::wgpu::Color) -> Result<wgpu::SurfaceTexture, wgpu::SurfaceError> {
     let output = display.surface.get_current_texture()?;
         let view = output
             .texture
@@ -71,9 +70,4 @@ fn clear_screen<'a>(app: &mut App<EmptyState>, color: sursface::wgpu::Color) -> 
         Ok(output)
 }
 
-fn present<'a>(_app: &mut App<EmptyState>, output: sursface::wgpu::SurfaceTexture) -> Result<(), wgpu::SurfaceError> {
-    output.present();
-    Ok(())
-}
-
-fn event<'a>(_app: &mut App<EmptyState>, _state: &mut EmptyState, _event: WindowEvent) {}
+fn event<'a>(_display: &mut Display, _state: &mut EmptyState, _event: WindowEvent) {}
