@@ -1,4 +1,4 @@
-use sursface::{display::Display, std::get_framebuffer, wgpu::{self, TextureView}, winit::event::WindowEvent};
+use sursface::{display::Display, wgpu::{self, TextureView}, winit::event::WindowEvent};
 #[cfg(target_arch = "wasm32")]
 use sursface::wasm_bindgen;
 

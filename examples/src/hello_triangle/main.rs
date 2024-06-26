@@ -1,8 +1,8 @@
-use sursface::{app::App, display::{self, Display}, std::{clear_screen, create_render_pipeline, create_shader, get_framebuffer}, wgpu::{self, Color, CommandEncoder, RenderPass, RenderPipeline, Surface, SurfaceTexture, TextureView}, winit::event::WindowEvent};
+use sursface::{display::Display, std::{clear_screen, create_render_pipeline, create_shader, get_framebuffer}, wgpu::{self, Color, RenderPipeline}, winit::event::WindowEvent};
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
-    use sursface::winit::{dpi::PhysicalSize, event};
+    use sursface::winit::dpi::PhysicalSize;
     sursface::start::create_window_desktop(PhysicalSize::new(1280, 720), &init, &render, &event);
 }
 
@@ -23,8 +23,6 @@ struct TriangleState {
 }
 
 fn init(display: &mut Display) -> TriangleState {
-    use std::borrow::Cow;
-    
     let device = &display.device;
 
     let shader = create_shader(device, include_str!("assets/shader.wgsl"));
