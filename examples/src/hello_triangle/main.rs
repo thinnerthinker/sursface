@@ -1,4 +1,4 @@
-use sursface::{display::Display, wgpu::{self, Color, CommandEncoder, RenderPass, RenderPipeline, Surface, SurfaceTexture, TextureView}, winit::event::WindowEvent};
+use sursface::{display::Display, std::{clear_screen, create_render_pipeline, create_shader}, wgpu::{self, Color, CommandEncoder, RenderPass, RenderPipeline, Surface, SurfaceTexture, TextureView}, winit::event::WindowEvent};
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
@@ -23,14 +23,9 @@ struct TriangleState {
 }
 
 fn init(display: &mut Display) -> TriangleState {
-    use std::borrow::Cow;
-    
     let device = &display.device;
 
-    let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-        label: None,
-        source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("assets/shader.wgsl"))),
-    });
+    let shader = create_shader(device, include_str!("assets/shader.wgsl"));
 
     let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: None,
@@ -38,27 +33,7 @@ fn init(display: &mut Display) -> TriangleState {
         push_constant_ranges: &[],
     });
 
-    let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-        label: None,
-        layout: Some(&pipeline_layout),
-        vertex: wgpu::VertexState {
-            module: &shader,
-            entry_point: "vs_main",
-            buffers: &[],
-            compilation_options: Default::default(),
-        },
-        fragment: Some(wgpu::FragmentState {
-            module: &shader,
-            entry_point: "fs_main",
-            targets: &[Some(display.config.format.into())],
-            compilation_options: Default::default(),
-        }),
-        primitive: wgpu::PrimitiveState::default(),
-        depth_stencil: None,
-        multisample: wgpu::MultisampleState::default(),
-        multiview: None,
-    });
-
+    let render_pipeline = create_render_pipeline(display, pipeline_layout, shader, &[]);
     TriangleState { render_pipeline }
 }
 
@@ -88,29 +63,6 @@ fn get_framebuffer(surface: &Surface) -> (SurfaceTexture, TextureView) {
     let output = surface.get_current_texture().unwrap();
     let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
     (output, view)
-}
-
-fn clear_screen<'a>(
-    framebuffer_view: &'a TextureView,
-    encoder: &'a mut CommandEncoder,
-    color: Color,
-) -> RenderPass<'a> {
-    let rpass_descriptor = wgpu::RenderPassDescriptor {
-        label: Some("Render Pass"),
-        color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-            view: framebuffer_view,
-            resolve_target: None,
-            ops: wgpu::Operations {
-                load: wgpu::LoadOp::Clear(color),
-                store: wgpu::StoreOp::Store,
-            },
-        })],
-        depth_stencil_attachment: None,
-        timestamp_writes: Default::default(),
-        occlusion_query_set: Default::default(),
-    };
-
-    encoder.begin_render_pass(&rpass_descriptor)
 }
 
 pub fn draw_triangle<'a>(

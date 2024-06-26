@@ -14,7 +14,7 @@ struct VertexOutput {
 };
 
 @vertex
-fn vs_main(@location(0) position: vec3<f32>, @location(1) uv: vec2<f32>) -> VertexOutput {
+fn vs_main(@location(0) position: vec3<f32>, @location(1) normal: vec3<f32>, @location(2) uv: vec2<f32>) -> VertexOutput {
     var output: VertexOutput;
     output.position = uniforms.model_view_proj * uniforms.camera_pan * vec4<f32>(position, 1.0);
     output.fragUV = uv;

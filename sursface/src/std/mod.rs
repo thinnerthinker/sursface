@@ -4,6 +4,11 @@ use wgpu::util::DeviceExt;
 use wgpu::BindGroupEntry;
 use wgpu::BindGroupLayoutEntry;
 use wgpu::Buffer;
+use wgpu::Face;
+use wgpu::FrontFace;
+use wgpu::PolygonMode;
+use wgpu::PrimitiveState;
+use wgpu::PrimitiveTopology;
 use wgpu::Sampler;
 use wgpu::{BindGroup, BindGroupLayout, Color, CommandEncoder, Device, PipelineLayout, Queue, RenderPass, RenderPipeline, ShaderModule, Surface, SurfaceTexture, TextureView, VertexBufferLayout};
 
@@ -65,7 +70,15 @@ pub fn create_render_pipeline<'a>(display: &Display, pipeline_layout: PipelineLa
             targets: &[Some(display.config.format.into())],
             compilation_options: Default::default(),
         }),
-        primitive: wgpu::PrimitiveState::default(),
+        primitive: PrimitiveState {
+            topology: PrimitiveTopology::TriangleList,
+            strip_index_format: None,
+            front_face: FrontFace::Ccw,
+            cull_mode: Some(Face::Back),
+            polygon_mode: PolygonMode::Fill,
+            unclipped_depth: false,
+            conservative: false,
+        },
         depth_stencil: None,
         multisample: wgpu::MultisampleState::default(),
         multiview: None,

@@ -1,4 +1,4 @@
-use sursface::{display::Display, wgpu, winit::event::WindowEvent};
+use sursface::{display::Display, std::{clear_screen, get_framebuffer}, wgpu, winit::event::WindowEvent};
 #[cfg(target_arch = "wasm32")]
 use sursface::wasm_bindgen;
 
@@ -28,12 +28,19 @@ fn init<'a>(_display: &mut Display) -> EmptyState {
 }
 
 fn render<'a>(display: &mut Display, _state: &mut EmptyState) {
-    let output = clear_screen(display, wgpu::Color {
-        r: 100.0 / 255.0,
-        g: 149.0 / 255.0,
-        b: 237.0 / 255.0,
-        a: 1.0,
-    }).unwrap();
+    let mut encoder = display.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+        label: Some("Encoder"),
+    });
+
+    let (output, view) = get_framebuffer(&display.surface);
+    {
+        clear_screen(&view, &mut encoder, wgpu::Color {
+            r: 100.0 / 255.0,
+            g: 149.0 / 255.0,
+            b: 237.0 / 255.0,
+            a: 1.0,
+        });
+    }
     output.present();
 }
 
