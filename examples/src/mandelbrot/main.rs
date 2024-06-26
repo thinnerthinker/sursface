@@ -72,17 +72,17 @@ struct MandelbrotState {
 #[repr(C)]
 #[derive(Copy, Clone, Pod, Zeroable)]
 pub struct Uniforms {
-    translation: [f32; 2],
-    cursor_pos: [f32; 2],
-    scale: f32,
-    _padding: f32,
+    translation: [f32; 2], // 8 bytes
+    cursor_pos: [f32; 2],  // 8 bytes
+    scale: f32,            // 4 bytes
+    _padding: [f32; 1],
 }
 
 fn init(display: &mut Display) -> MandelbrotState {
     let device = &display.device;
 
     let shader = create_shader(device, include_str!("assets/shader.wgsl"));
-    let (uniform_buffer, uniform_bind_group_layout, uniform_bind_group ) = create_uniforms(device, Uniforms { translation: Vector2::zero().into(), cursor_pos: Vector2::zero().into(), scale: 4f32, _padding: 0f32 }, 0);
+    let (uniform_buffer, uniform_bind_group_layout, uniform_bind_group ) = create_uniforms(device, Uniforms { translation: Vector2::zero().into(), cursor_pos: Vector2::zero().into(), scale: 4f32, _padding: [0f32] }, 0);
 
     let pipeline_layout = device.create_pipeline_layout(&PipelineLayoutDescriptor {
         label: None,
@@ -127,7 +127,7 @@ fn init(display: &mut Display) -> MandelbrotState {
         vertex_buffer,
         uniform_buffer,
         uniform_bind_group,
-        uniforms: Uniforms { translation: Vector2::zero().into(), cursor_pos: Vector2::zero().into(), scale: 4f32, _padding: 0f32 },
+        uniforms: Uniforms { translation: Vector2::zero().into(), cursor_pos: Vector2::zero().into(), scale: 4f32, _padding: [0f32] },
         scale_speed: 1.0f32 - 0.001f32,
         last_cursor_location: PhysicalPosition::new(0f32, 0f32),
         cursor_location: PhysicalPosition::new(0f32, 0f32),
