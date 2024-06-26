@@ -33,6 +33,6 @@ pub fn now_secs() -> f32 {
         let performance = window.performance().unwrap();
             
         let elapsed = performance.now() - *START_TIME;
-        (elapsed / 1000.0) as f32 * 1000f32 // Convert milliseconds to seconds
+        (elapsed) as f32
     }
 }
