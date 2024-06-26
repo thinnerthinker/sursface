@@ -24,7 +24,7 @@ fn fs_main(@location(0) fragUV: vec2<f32>) -> @location(0) vec4<f32> {
     let max_iter: u32 = 100u;
 
     // Calculate the coordinates in the complex plane
-    let centered_uv = (fragUV * 2.0 - vec2<f32>(1.0, 1.0)); // Convert [0,1] range to [-1,1]
+    let centered_uv = fragUV * 2.0 - vec2<f32>(1.0, 1.0); // Convert [0,1] range to [-1,1]
     
     // Adjust coordinates based on translation and scale, without affecting rotation
     let c = uniforms.translation + vec2<f32>(

@@ -1,9 +1,9 @@
 use sursface::display::Display;
 use sursface::std::{clear_screen, create_render_pipeline, create_shader, create_uniforms, get_framebuffer};
-use sursface::std::models::{quad_no_normal, quad_uvs, VertexPositionNormalUv, VertexPositionUv};
+use sursface::std::models::{quad_no_normal, quad_uvs, VertexPositionUv};
 use sursface::time::now;
 use sursface::wgpu::util::DeviceExt;
-use sursface::wgpu::{BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingType, Buffer, BufferAddress, BufferBindingType, BufferUsages, Color, CommandEncoder, CommandEncoderDescriptor, Device, Face, FragmentState, FrontFace, IndexFormat, LoadOp, MultisampleState, Operations, PipelineLayoutDescriptor, PolygonMode, PrimitiveState, PrimitiveTopology, RenderPass, RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, ShaderModuleDescriptor, ShaderSource, ShaderStages, StoreOp, Surface, SurfaceTexture, TextureView, TextureViewDescriptor, VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode};
+use sursface::wgpu::{BindGroup, Buffer, BufferAddress, BufferUsages, Color, CommandEncoderDescriptor, PipelineLayoutDescriptor, RenderPass, RenderPipeline, VertexAttribute, VertexBufferLayout, VertexFormat, VertexStepMode};
 use sursface::winit::dpi::PhysicalPosition;
 use sursface::winit::event::{ElementState, MouseButton, WindowEvent};
 use sursface::{log, wgpu};
