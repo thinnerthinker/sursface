@@ -3,17 +3,19 @@
 use wasm_bindgen::prelude::*;
 use std::convert::TryInto;
 use std::ops::{Add, Sub, AddAssign, SubAssign};
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::{Duration, Instant as StdInstant};
 
 pub use std::time::*;
 
 #[cfg(not(target_arch = "wasm32"))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Instant(std::time::Instant);
+pub struct Instant(StdInstant);
 
 #[cfg(not(target_arch = "wasm32"))]
 impl Instant {
     pub fn now() -> Self {
-        Self(std::time::Instant::now())
+        Self(StdInstant::now())
     }
     pub fn duration_since(&self, earlier: Instant) -> Duration {
         self.0.duration_since(earlier.0)
@@ -32,36 +34,31 @@ impl Instant {
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
 extern "C" {
-    #[wasm_bindgen(js_namespace = Date, js_name = now)]
-    fn date_now() -> f64;
+    #[wasm_bindgen(js_namespace = performance, js_name = now)]
+    fn performance_now() -> f64;
 }
 
 #[cfg(target_arch = "wasm32")]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Instant(u64);
+pub struct Instant(f64);
 
 #[cfg(target_arch = "wasm32")]
 impl Instant {
     pub fn now() -> Self {
-        Self((date_now() * 1_000.0) as u64) // Convert seconds to milliseconds
+        Self(performance_now() / 1000.0) // Convert milliseconds to seconds
     }
     pub fn duration_since(&self, earlier: Instant) -> Duration {
-        Duration::from_millis(self.0 - earlier.0)
+        let elapsed_secs = self.0 - earlier.0;
+        Duration::from_secs_f64(elapsed_secs)
     }
     pub fn elapsed(&self) -> Duration {
         Self::now().duration_since(*self)
     }
     pub fn checked_add(&self, duration: Duration) -> Option<Self> {
-        match duration.as_millis().try_into() {
-            Ok(duration) => self.0.checked_add(duration).map(Self),
-            Err(_) => None,
-        }
+        Some(Self(self.0 + duration.as_secs_f64()))
     }
     pub fn checked_sub(&self, duration: Duration) -> Option<Self> {
-        match duration.as_millis().try_into() {
-            Ok(duration) => self.0.checked_sub(duration).map(Self),
-            Err(_) => None,
-        }
+        Some(Self(self.0 - duration.as_secs_f64()))
     }
 }
 
@@ -105,7 +102,12 @@ lazy_static! {
 }
 
 pub fn now() -> f32 {
-    Instant::now().duration_since(*START_TIME).as_secs_f32()
+    let current_time = Instant::now().0;
+
+    // Calculate elapsed time in seconds since the start time
+    let elapsed_time = current_time - START_TIME.0;
+
+    elapsed_time.as_secs_f64() as f32 // Convert to f32 explicitly
 }
 
 fn main() {
