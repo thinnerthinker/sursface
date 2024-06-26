@@ -1,7 +1,7 @@
 use sursface::display::Display;
 use sursface::std::{clear_screen, create_render_pipeline, create_shader, create_uniforms, get_framebuffer};
 use sursface::std::models::{quad_no_normal, quad_uvs, VertexPositionUv};
-use sursface::time::now;
+use sursface::time::now_secs;
 use sursface::wgpu::util::DeviceExt;
 use sursface::wgpu::{BindGroup, Buffer, BufferAddress, BufferUsages, Color, CommandEncoderDescriptor, PipelineLayoutDescriptor, RenderPass, RenderPipeline, VertexAttribute, VertexBufferLayout, VertexFormat, VertexStepMode};
 use sursface::winit::dpi::PhysicalPosition;
@@ -153,7 +153,7 @@ fn init(display: &mut Display) -> MandelbrotState {
         scale_speed: 1.0 - 0.001,
         last_cursor_location: PhysicalPosition::new(0.0, 0.0),
         cursor_location: PhysicalPosition::new(0.0, 0.0),
-        last_timestep: now(),
+        last_timestep: now_secs(),
         interaction_state: InteractionState::Idle {
             last_pressed_down_at: 0.0,
             pre_tap: false,
@@ -163,8 +163,8 @@ fn init(display: &mut Display) -> MandelbrotState {
 
 
 fn render(display: &mut Display, state: &mut MandelbrotState) {
-    let dt = now() - state.last_timestep;
-    state.last_timestep = now();
+    let dt = now_secs() - state.last_timestep;
+    state.last_timestep = now_secs();
     state.uniforms.aspect_ratio = display.config.width as f32 / display.config.height as f32;
 
     let clear_color = Color {
@@ -176,9 +176,9 @@ fn render(display: &mut Display, state: &mut MandelbrotState) {
 
     state.interaction_state = match state.interaction_state.clone() {
         InteractionState::PanningIdle { pressed_down_at, pre_tap } => {
-            log::info!("{} {}", now(), pressed_down_at);
-            if now() - pressed_down_at > 0.3f32 {
-                log::info!("zooming {}", now());
+            log::info!("{} {}", now_secs(), pressed_down_at);
+            if now_secs() - pressed_down_at > 0.3f32 {
+                log::info!("zooming {}", now_secs());
                 InteractionState::Zooming
             } else {
                 InteractionState::PanningIdle { pressed_down_at, pre_tap } 
@@ -259,10 +259,10 @@ fn event<'a>(display: &mut Display, state: &mut MandelbrotState, event: WindowEv
                 state.last_cursor_location = state.cursor_location;
                 match state.interaction_state.clone() {
                     InteractionState::Idle { last_pressed_down_at, pre_tap } => {
-                        if pre_tap && (now() - last_pressed_down_at) < 0.3f32 {
+                        if pre_tap && (now_secs() - last_pressed_down_at) < 0.3f32 {
                             InteractionState::ZoomingOut
                         } else {
-                            InteractionState::PanningIdle { pressed_down_at: now(), pre_tap: false }
+                            InteractionState::PanningIdle { pressed_down_at: now_secs(), pre_tap: false }
                         }
                     }
                     state => state
@@ -270,14 +270,14 @@ fn event<'a>(display: &mut Display, state: &mut MandelbrotState, event: WindowEv
             } else if elem_state == ElementState::Released && button == MouseButton::Left {
                 match state.interaction_state.clone() {
                     InteractionState::PanningIdle { pre_tap: false, pressed_down_at } => {
-                        if now() - pressed_down_at < 0.3f32 {  
+                        if now_secs() - pressed_down_at < 0.3f32 {  
                             InteractionState::Idle { last_pressed_down_at: pressed_down_at, pre_tap: true }
                         } else {
                             InteractionState::Idle { last_pressed_down_at: pressed_down_at, pre_tap: false }
                         }
                     }
                     InteractionState::Zooming | InteractionState::ZoomingOut | InteractionState::Panning =>
-                        InteractionState::Idle { last_pressed_down_at: now(), pre_tap: false },
+                        InteractionState::Idle { last_pressed_down_at: now_secs(), pre_tap: false },
                     state => state
                 }
             } else { state.interaction_state.clone() };

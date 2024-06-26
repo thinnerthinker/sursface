@@ -1,7 +1,7 @@
 use sursface::display::Display;
 use sursface::std::models::{quad_uvs, cube, VertexPositionNormalUv};
 use sursface::std::{clear_screen, create_render_pipeline, create_sampler_entry, create_shader, create_texture, create_texture_layout_entry, create_uniforms, get_framebuffer};
-use sursface::time::now;
+use sursface::time::now_secs;
 use sursface::wgpu::{BindGroupEntry, Buffer};
 use sursface::winit::event::WindowEvent;
 use sursface::wgpu;
@@ -103,7 +103,7 @@ fn init(display: &mut Display) -> CubeState {
         },
     ]);
 
-    let start_time = now();
+    let start_time = now_secs();
 
     let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("Vertex Buffer"),
@@ -149,7 +149,7 @@ fn render(display: &mut Display, state: &mut CubeState) {
         {
             let mut rpass = clear_screen(&view, &mut encoder, clear_color);
 
-            let now = now();
+            let now = now_secs();
             let elapsed = now - state.start_time;
             sursface::log::info!("{} {}", now, elapsed);
             let aspect_ratio = display.config.width as f32 / display.config.height as f32;

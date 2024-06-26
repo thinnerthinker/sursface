@@ -3,8 +3,17 @@
 use wasm_bindgen::prelude::*;
 use std::convert::{TryInto};
 use std::ops::{Add, Sub, AddAssign, SubAssign};
+use lazy_static::lazy_static;
 
 pub use std::time::*;
+
+lazy_static! {
+    static ref START_TIME: Instant = Instant::now();
+}
+
+pub fn now_secs() -> f32 {
+    Instant::now().duration_since(*START_TIME).as_secs_f64() as f32
+}
 
 #[cfg(not(target_arch = "wasm32"))] #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)] pub struct Instant(std::time::Instant);
 #[cfg(not(target_arch = "wasm32"))] impl Instant {
