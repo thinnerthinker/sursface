@@ -37,37 +37,4 @@ fn render<'a>(display: &mut Display, _state: &mut EmptyState) {
     output.present();
 }
 
-
-fn clear_screen<'a>(display: &mut Display, color: sursface::wgpu::Color) -> Result<wgpu::SurfaceTexture, wgpu::SurfaceError> {
-    let output = display.surface.get_current_texture()?;
-        let view = output
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
-
-        let mut encoder = display.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("Clear Screen Encoder"),
-        });
-
-        {
-            let _render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Render Pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &view,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(color),
-                        store: wgpu::StoreOp::Store,
-                    },
-                })],
-                depth_stencil_attachment: None,
-                occlusion_query_set: None,
-                timestamp_writes: None,
-            });
-        }
-
-        display.queue.submit(std::iter::once(encoder.finish()));
-
-        Ok(output)
-}
-
 fn event<'a>(_display: &mut Display, _state: &mut EmptyState, _event: WindowEvent) {}
