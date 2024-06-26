@@ -1,19 +1,13 @@
-use std::time::Instant;
-use cube::{INDICES, VERTICES};
 use sursface::display::Display;
 use sursface::std::models::{quad_uvs, cube, VertexPositionNormalUv};
-use sursface::std::{create_render_pipeline, create_sampler_entry, create_shader, create_texture, create_texture_layout_entry, create_uniforms};
+use sursface::std::{clear_screen, create_render_pipeline, create_sampler_entry, create_shader, create_texture, create_texture_layout_entry, create_uniforms, get_framebuffer};
 use sursface::time::now;
-use sursface::wgpu::{BindGroup, BindGroupEntry, BindGroupLayout, Buffer, Device, Queue, RenderPass, Surface};
+use sursface::wgpu::{BindGroupEntry, Buffer};
 use sursface::winit::event::WindowEvent;
-use sursface::{app::App, wgpu};
-use wgpu::{util::DeviceExt, Color, CommandEncoder, RenderPipeline, SurfaceTexture, TextureView};
-use sursface::cgmath::{Deg, Matrix4, Point3, Rad, Vector3, perspective};
+use sursface::wgpu;
+use wgpu::{util::DeviceExt, Color, RenderPipeline};
+use sursface::cgmath::{Deg, Matrix4, Point3, Vector3, perspective};
 use sursface::cgmath::SquareMatrix;
-
-use crate::cube::Vertex;
-
-mod cube;
 
 #[cfg(target_arch = "wasm32")]
 use sursface::wasm_bindgen;
@@ -44,7 +38,8 @@ struct CubeState {
     texture_bind_group: wgpu::BindGroup,
     uniforms: Uniforms,
     yaw: f64,
-    pitch: f64
+    pitch: f64,
+    pan_speed: f64
 }
 
 
@@ -57,8 +52,6 @@ pub struct Uniforms {
 }
 
 fn init(display: &mut Display) -> CubeState {
-    use std::borrow::Cow;
-
     let device = &display.device;
 
     let shader = create_shader(device, include_str!("assets/shader.wgsl"));
@@ -135,14 +128,15 @@ fn init(display: &mut Display) -> CubeState {
         uniforms: Uniforms { model_view_proj: Matrix4::identity().into(), camera_pan: Matrix4::identity().into() },
         yaw: 0f64,
         pitch: 0f64,
+        pan_speed: 0.4f64
     }
 }
 
 fn render(display: &mut Display, state: &mut CubeState) {
     let clear_color = Color {
-        r: 100.0 / 255.0,
-        g: 149.0 / 255.0,
-        b: 237.0 / 255.0,
+        r: 252.0 / 255.0,
+        g: 241.0 / 255.0,
+        b: 139.0 / 255.0,
         a: 255.0 / 255.0,
     };
 
@@ -152,7 +146,6 @@ fn render(display: &mut Display, state: &mut CubeState) {
         });
 
         let (output, view) = get_framebuffer(&display.surface);
-        
         {
             let mut rpass = clear_screen(&view, &mut encoder, clear_color);
 
@@ -183,35 +176,6 @@ fn render(display: &mut Display, state: &mut CubeState) {
     };
 
     output.present();
-}
-
-fn get_framebuffer(surface: &Surface) -> (SurfaceTexture, TextureView) {
-    let output = surface.get_current_texture().unwrap();
-    let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
-    (output, view)
-}
-
-fn clear_screen<'a>(
-    framebuffer_view: &'a TextureView,
-    encoder: &'a mut CommandEncoder,
-    color: Color,
-) -> RenderPass<'a> {
-    let rpass_descriptor = wgpu::RenderPassDescriptor {
-        label: Some("Render Pass"),
-        color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-            view: framebuffer_view,
-            resolve_target: None,
-            ops: wgpu::Operations {
-                load: wgpu::LoadOp::Clear(color),
-                store: wgpu::StoreOp::Store,
-            },
-        })],
-        depth_stencil_attachment: None,
-        timestamp_writes: Default::default(),
-        occlusion_query_set: Default::default(),
-    };
-
-    encoder.begin_render_pass(&rpass_descriptor)
 }
 
 pub fn draw_cube<'a>(
@@ -255,7 +219,8 @@ fn event<'a>(_display: &mut Display, state: &mut CubeState, event: WindowEvent) 
         state.yaw = x;
         state.pitch = -y;
         
-        state.uniforms.camera_pan = (Matrix4::from_angle_y(Deg(state.yaw)) * Matrix4::from_angle_x(Deg(state.pitch)))
+        state.uniforms.camera_pan = (Matrix4::from_angle_y(Deg(state.yaw * state.pan_speed)) * 
+            Matrix4::from_angle_x(Deg(state.pitch * state.pan_speed)))
             .cast().unwrap().into();
     }
 }

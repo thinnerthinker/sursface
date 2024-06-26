@@ -107,7 +107,7 @@ impl<'a, State> ApplicationHandler for App<'a, State> {
         }
         #[cfg(target_arch = "wasm32")]
         {
-            self.display = Some(Display::from_canvas(event_loop, self.canvas.clone()));
+            self.display = Some(Arc::new(Mutex::new(Display::from_canvas(event_loop, self.canvas.clone()))));
         }
 
         let new_state = {
