@@ -20,23 +20,29 @@ mod platform_time {
     use lazy_static::lazy_static;
 
     lazy_static! {
-        static ref TIME_AT_START: Instant = Instant::now();
+        static ref START: Instant = Instant::now();
     }
 
     pub fn current_time() -> f64 {
-        TIME_AT_START.elapsed().as_secs_f64()
+        START.elapsed().as_secs_f64()
     }
 }
 
 lazy_static! {
-    static ref TIME_AT_START: f64 = platform_time::current_time();
+    static ref START_TIME: f64 = platform_time::current_time();
 }
 
 pub fn now() -> f32 {
-    (platform_time::current_time() - *TIME_AT_START) as f32
+    (platform_time::current_time() - *START_TIME) as f32
 }
 
 fn main() {
     // Example usage
-    println!("Current time: {} seconds since start", now());
+    let start = now();
+    // Simulate some workload
+    for _ in 0..1_000_000 {
+        let _ = 1 + 1;
+    }
+    let end = now();
+    println!("Elapsed time: {} seconds", end - start);
 }
