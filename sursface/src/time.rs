@@ -11,17 +11,6 @@ lazy_static! {
     static ref START_TIME: Instant = Instant::now();
 }
 
-#[cfg(target_arch = "wasm32")]
-lazy_static! {
-    static ref START_TIME: f64 = {
-        let window = web_sys::window().expect("should have a window in this context");
-        let performance = window.performance().unwrap();
-            
-        performance.now()
-    };
-}
-
-
 pub fn now_secs() -> f32 {
     #[cfg(not(target_arch = "wasm32"))]
     {
@@ -32,7 +21,7 @@ pub fn now_secs() -> f32 {
         let window = web_sys::window().expect("should have a window in this context");
         let performance = window.performance().unwrap();
             
-        let elapsed = performance.now() - *START_TIME;
+        let elapsed = performance.now();
         (elapsed / 1000.0) as f32 * 1000f32 // Convert milliseconds to seconds
     }
 }
