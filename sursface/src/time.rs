@@ -33,6 +33,6 @@ pub fn now_secs() -> f32 {
         let performance = window.performance().unwrap();
             
         let elapsed = performance.now() - *START_TIME;
-        (elapsed) as f32
+        -elapsed as f32
     }
 }
