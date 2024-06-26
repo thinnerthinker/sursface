@@ -75,14 +75,23 @@ pub struct Uniforms {
     translation: [f32; 2], // 8 bytes
     cursor_pos: [f32; 2],  // 8 bytes
     scale: f32,            // 4 bytes
-    _padding: [f32; 1],
+    _padding1: f32,        // 4 bytes
 }
 
 fn init(display: &mut Display) -> MandelbrotState {
     let device = &display.device;
 
     let shader = create_shader(device, include_str!("assets/shader.wgsl"));
-    let (uniform_buffer, uniform_bind_group_layout, uniform_bind_group ) = create_uniforms(device, Uniforms { translation: Vector2::zero().into(), cursor_pos: Vector2::zero().into(), scale: 4f32, _padding: [0f32] }, 0);
+    let (uniform_buffer, uniform_bind_group_layout, uniform_bind_group) = create_uniforms(
+        device,
+        Uniforms {
+            translation: Vector2::zero().into(),
+            cursor_pos: Vector2::zero().into(),
+            scale: 4.0,
+            _padding1: 0.0
+        },
+        0,
+    );
 
     let pipeline_layout = device.create_pipeline_layout(&PipelineLayoutDescriptor {
         label: None,
@@ -90,8 +99,11 @@ fn init(display: &mut Display) -> MandelbrotState {
         push_constant_ranges: &[],
     });
 
-    let render_pipeline = create_render_pipeline(display, pipeline_layout, shader, &[
-        VertexBufferLayout {
+    let render_pipeline = create_render_pipeline(
+        display,
+        pipeline_layout,
+        shader,
+        &[VertexBufferLayout {
             array_stride: std::mem::size_of::<VertexPositionUv>() as BufferAddress,
             step_mode: VertexStepMode::Vertex,
             attributes: &[
@@ -106,19 +118,20 @@ fn init(display: &mut Display) -> MandelbrotState {
                     format: VertexFormat::Float32x2,
                 },
             ],
-        },
-    ]);
+        }],
+    );
 
-    let quad_uvs = quad_uvs((0f32, 0f32), (1f32, 1f32));
+    let quad_uvs = quad_uvs((0.0, 0.0), (1.0, 1.0));
 
     let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("Vertex Buffer"),
         contents: bytemuck::cast_slice(&quad_no_normal(
-            [-1f32, -1f32, 1f32],
-            [1f32, -1f32, 1f32],
-            [1f32, 1f32, 1f32],
-            [-1f32, 1f32, 1f32],
-            quad_uvs)),
+            [-1.0, -1.0, 1.0],
+            [1.0, -1.0, 1.0],
+            [1.0, 1.0, 1.0],
+            [-1.0, 1.0, 1.0],
+            quad_uvs,
+        )),
         usage: BufferUsages::VERTEX,
     });
 
@@ -127,14 +140,23 @@ fn init(display: &mut Display) -> MandelbrotState {
         vertex_buffer,
         uniform_buffer,
         uniform_bind_group,
-        uniforms: Uniforms { translation: Vector2::zero().into(), cursor_pos: Vector2::zero().into(), scale: 4f32, _padding: [0f32] },
-        scale_speed: 1.0f32 - 0.001f32,
-        last_cursor_location: PhysicalPosition::new(0f32, 0f32),
-        cursor_location: PhysicalPosition::new(0f32, 0f32),
+        uniforms: Uniforms {
+            translation: Vector2::zero().into(),
+            cursor_pos: Vector2::zero().into(),
+            scale: 4.0,
+            _padding1: 0.0,
+        },
+        scale_speed: 1.0 - 0.001,
+        last_cursor_location: PhysicalPosition::new(0.0, 0.0),
+        cursor_location: PhysicalPosition::new(0.0, 0.0),
         last_timestep: now(),
-        interaction_state: InteractionState::Idle { last_pressed_down_at: 0f32, pre_tap: false }
+        interaction_state: InteractionState::Idle {
+            last_pressed_down_at: 0.0,
+            pre_tap: false,
+        },
     }
 }
+
 
 fn render(display: &mut Display, state: &mut MandelbrotState) {
     let dt = now() - state.last_timestep;
