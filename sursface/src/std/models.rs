@@ -39,6 +39,19 @@ pub const fn quad(
     ]
 }
 
+pub const fn quad_no_normal(
+    pos1: [f32; 3], pos2: [f32; 3], pos3: [f32; 3], pos4: [f32; 3], uvs: [[f32; 2]; 4]
+) -> [VertexPositionUv; 6] {
+    [
+        VertexPositionUv { position: pos1, uv: uvs[0] },
+        VertexPositionUv { position: pos2, uv: uvs[1] },
+        VertexPositionUv { position: pos3, uv: uvs[2] },
+        VertexPositionUv { position: pos3, uv: uvs[2] },
+        VertexPositionUv { position: pos4, uv: uvs[3] },
+        VertexPositionUv { position: pos1, uv: uvs[0] },
+    ]
+}
+
 pub const fn cube(uvs: &[[[f32; 2]; 4]]) -> [VertexPositionNormalUv; 36] {  
     let front = quad(
         [-1.0, -1.0,  1.0],
