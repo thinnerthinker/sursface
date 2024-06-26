@@ -167,7 +167,7 @@ fn render(display: &mut Display, state: &mut MandelbrotState) {
     #[cfg(target_arch = "wasm32")] {
         dt *= -1f32;
     }
-    
+
     state.last_timestep = now_secs();
     state.uniforms.aspect_ratio = display.config.width as f32 / display.config.height as f32;
 
@@ -265,7 +265,7 @@ fn event<'a>(display: &mut Display, state: &mut MandelbrotState, event: WindowEv
                 state.last_cursor_location = state.cursor_location;
                 match state.interaction_state.clone() {
                     InteractionState::Idle { last_pressed_down_at, pre_tap } => {
-                        if pre_tap && (now_secs() - last_pressed_down_at) < 0.3f32 {
+                        if pre_tap {
                             InteractionState::ZoomingOut
                         } else {
                             InteractionState::PanningIdle { pressed_down_at: now_secs(), pre_tap: false }
