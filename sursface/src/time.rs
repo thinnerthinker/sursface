@@ -13,15 +13,14 @@ lazy_static! {
 
 #[cfg(target_arch = "wasm32")]
 lazy_static! {
-    static ref START_TIME: f64 = performance_now();
+    static ref START_TIME: f64 = {
+        let window = web_sys::window().expect("should have a window in this context");
+        let performance = window.performance().unwrap();
+            
+        performance.now()
+    };
 }
 
-#[cfg(target_arch = "wasm32")]
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(js_namespace = performance)]
-    fn performance_now() -> f64;
-}
 
 pub fn now_secs() -> f32 {
     #[cfg(not(target_arch = "wasm32"))]
