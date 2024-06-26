@@ -168,7 +168,7 @@ fn render(display: &mut Display, state: &mut MandelbrotState) {
     state.uniforms.aspect_ratio = display.config.width as f32 / display.config.height as f32;
 
     #[cfg(target_arch = "wasm32")] {
-        dt *= -1;
+        dt *= -1f32;
     }
 
     let clear_color = Color {
