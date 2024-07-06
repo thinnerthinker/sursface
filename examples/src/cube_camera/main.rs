@@ -1,6 +1,6 @@
 use sursface::display::Display;
 use sursface::std::models::{quad_uvs, cube, VertexPositionNormalUv};
-use sursface::std::{clear_screen, create_render_pipeline, create_sampler_entry, create_shader, create_texture, create_texture_layout_entry, create_uniforms, get_framebuffer};
+use sursface::std::{clear_screen, create_render_pipeline, create_sampler_entry, create_shader, create_texture, create_texture_layout_entry_from_image, create_uniforms, get_framebuffer};
 use sursface::time::now_secs;
 use sursface::wgpu::{BindGroupEntry, Buffer};
 use sursface::winit::event::WindowEvent;
@@ -65,7 +65,7 @@ fn init(display: &mut Display) -> CubeState {
 
     let shader = create_shader(device, include_str!("assets/shader.wgsl"));
 
-    let (texture_bind_group_entry, texture_view) = create_texture_layout_entry(device, &display.queue, include_bytes!("assets/dice.png"), 0);
+    let (texture_bind_group_entry, texture_view) = create_texture_layout_entry_from_image(device, &display.queue, include_bytes!("assets/dice.png"), 0);
     let (sampler_entry, sampler) = create_sampler_entry(device, 1);
 
     let (texture_bind_group_layout,texture_bind_group ) = create_texture(device, 

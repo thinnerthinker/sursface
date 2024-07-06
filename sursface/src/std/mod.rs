@@ -86,7 +86,7 @@ pub fn create_render_pipeline<'a>(display: &Display, pipeline_layout: PipelineLa
 }
 
 
-pub fn create_texture_layout_entry(device: &Device, queue: &Queue, image_bytes: &'static [u8], binding_index: u32) -> (BindGroupLayoutEntry, TextureView) {
+pub fn create_texture_layout_entry_from_image(device: &Device, queue: &Queue, image_bytes: &'static [u8], binding_index: u32) -> (BindGroupLayoutEntry, TextureView) {
     let img = image::load(std::io::Cursor::new(image_bytes.as_ref()), ImageFormat::Png).unwrap();
     let rgba = img.to_rgba8();
     let dimensions = img.dimensions();
