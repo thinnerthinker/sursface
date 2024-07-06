@@ -120,7 +120,7 @@ impl<'a> Display<'a> {
         }
     }
 
-    pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
-        Ok(())
+    pub fn window(&self) -> &Window {
+        &self.window
     }
 }
