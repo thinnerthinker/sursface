@@ -4,7 +4,7 @@ use winit::dpi::PhysicalSize;
 use winit::event::{DeviceEvent, ElementState, KeyEvent, WindowEvent};
 use winit::event_loop::ActiveEventLoop;
 use winit::keyboard::{KeyCode, PhysicalKey};
-use winit::window::WindowId;
+use winit::window::{Window, WindowId};
 
 #[cfg(target_arch = "wasm32")]
 extern crate console_error_panic_hook;
@@ -22,6 +22,7 @@ pub struct App<'a, State> {
 
 pub struct AppHandlers<State> {
     pub init: fn(&mut Display) -> State,
+    pub create_display: fn(Window) -> Display<'static>,
     pub render: fn(&mut Display, &mut State),
     pub event: fn(&mut Display, &mut State, WindowEvent),
     pub device_event: fn(&mut Display, &mut State, DeviceEvent),
@@ -31,6 +32,7 @@ impl<State> Default for AppHandlers<State> {
     fn default() -> Self {
         AppHandlers {
             init: |_display: &mut Display| panic!("init handler not provided"),
+            create_display: |window: Window| Display::from_window(window),
             render: |_display: &mut Display, _state: &mut State| {},
             event: |_display: &mut Display, _state: &mut State, _event: WindowEvent| {},
             device_event: |_display: &mut Display, _state: &mut State, _event: DeviceEvent| {},
@@ -113,11 +115,11 @@ impl<'a, State> ApplicationHandler for App<'a, State> {
         
         #[cfg(not(target_arch = "wasm32"))]
         {
-            self.display = Some(Arc::new(Mutex::new(Display::from_window_size(event_loop, self.initial_size))));
+            self.display = Some(Arc::new(Mutex::new(Display::from_window(Display::create_window_from_size(event_loop, self.initial_size)))));
         }
         #[cfg(target_arch = "wasm32")]
         {
-            self.display = Some(Arc::new(Mutex::new(Display::from_canvas(event_loop, self.canvas.clone()))));
+            self.display = Some(Arc::new(Mutex::new(Display::from_window(Display::create_window_from_canvas(event_loop, self.canvas.clone())))));
         }
 
         let new_state = (&self.handlers.init)(&mut self.display.clone().unwrap().lock().unwrap());

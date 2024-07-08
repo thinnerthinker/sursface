@@ -19,26 +19,26 @@ pub struct Display<'a> {
 }
 
 impl<'a> Display<'a> {
-    pub fn from_window_size(event_loop: &ActiveEventLoop, window_size: PhysicalSize<u32>) -> Self {
+    pub fn create_window_from_size(event_loop: &ActiveEventLoop, window_size: PhysicalSize<u32>) -> Window {
         let window = event_loop
             .create_window(WindowAttributes::default()
                 .with_inner_size(window_size))
             .expect("Couldn't create window");
 
-        Self::from_window(window)
+        window
     }
 
     #[cfg(target_arch = "wasm32")]
-    pub fn from_canvas(event_loop: &ActiveEventLoop, canvas: wgpu::web_sys::HtmlCanvasElement) -> Self {
+    pub fn create_window_from_canvas(event_loop: &ActiveEventLoop, canvas: wgpu::web_sys::HtmlCanvasElement) -> Window {
         let window = event_loop
             .create_window(WindowAttributes::default()
                 .with_canvas(Some(canvas)))
             .expect("Couldn't create window");
 
-        Self::from_window(window)
+        window
     }
 
-    fn from_window(window: Window) -> Self {
+    pub fn from_window(window: Window) -> Self {
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             #[cfg(not(target_arch = "wasm32"))]
             backends: wgpu::Backends::PRIMARY,
