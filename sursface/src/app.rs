@@ -11,33 +11,24 @@ extern crate console_error_panic_hook;
 
 use super::display::Display;
 
-pub struct App<'a, State> {
+pub struct App<'a, State: AppState> {
     pub display: Option<Arc<Mutex<Display<'a>>>>,
     pub initial_size: PhysicalSize<u32>,
     #[cfg(target_arch = "wasm32")]
     pub canvas: wgpu::web_sys::HtmlCanvasElement,
-    pub state: Option<Arc<Mutex<State>>>,
-    pub handlers: AppHandlers<State>
+    pub state: Option<Arc<Mutex<State>>>
 }
 
-pub struct AppHandlers<State> {
-    pub init: fn(&mut Display) -> State,
-    pub create_display: fn(Window) -> Display<'static>,
-    pub render: fn(&mut Display, &mut State),
-    pub event: fn(&mut Display, &mut State, WindowEvent),
-    pub device_event: fn(&mut Display, &mut State, DeviceEvent),
-}
-
-impl<State> Default for AppHandlers<State> {
-    fn default() -> Self {
-        AppHandlers {
-            init: |_display: &mut Display| panic!("init handler not provided"),
-            create_display: |window: Window| Display::from_window(window),
-            render: |_display: &mut Display, _state: &mut State| {},
-            event: |_display: &mut Display, _state: &mut State, _event: WindowEvent| {},
-            device_event: |_display: &mut Display, _state: &mut State, _event: DeviceEvent| {},
-        }
+pub trait AppState {
+    fn init(display: &mut Display) -> Self;
+    fn create_display(window: Window) -> Display<'static> {
+        Display::from_window(window)
     }
+
+    fn render(&mut self, display: &mut Display);
+    
+    fn event(&mut self, display: &mut Display, event: WindowEvent) {}
+    fn device_event(&mut self, display: &mut Display, event: DeviceEvent) {}
 }
 
 
@@ -76,40 +67,32 @@ fn init_logger() {
     }    
 }
 
-impl<'a, State> App<'a, State> {
+impl<'a, State: AppState> App<'a, State> {
     #[cfg(not(target_arch = "wasm32"))]
-    pub fn from_window_size(
-        size: PhysicalSize<u32>,
-        handlers: AppHandlers<State>) -> Self
+    pub fn from_window_size(size: PhysicalSize<u32>) -> Self
     {
-
         log::debug!("Setting window size");
         App {
             initial_size: size,
             display: None,
             state: None,
-            handlers
         }
     }
 
-
     #[cfg(target_arch = "wasm32")]
-    pub fn from_canvas(
-        canvas: wgpu::web_sys::HtmlCanvasElement,
-        handlers: AppHandlers<State>) -> Self
+    pub fn from_canvas(canvas: wgpu::web_sys::HtmlCanvasElement) -> Self
     {
         log::debug!("Setting canvas size");
         App {
             initial_size: PhysicalSize::new(canvas.width(), canvas.height()),
             canvas,
             display: None,
-            state: None,
-            handlers
+            state: None
         }
     }
 }
 
-impl<'a, State> ApplicationHandler for App<'a, State> {
+impl<'a, State: AppState> ApplicationHandler for App<'a, State> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         init_logger();
         
@@ -122,13 +105,15 @@ impl<'a, State> ApplicationHandler for App<'a, State> {
             self.display = Some(Arc::new(Mutex::new(Display::from_window(Display::create_window_from_canvas(event_loop, self.canvas.clone())))));
         }
 
-        let new_state = (&self.handlers.init)(&mut self.display.clone().unwrap().lock().unwrap());
+        let new_state = State::init(&mut self.display.clone().unwrap().lock().unwrap());
         self.state = Some(Arc::new(Mutex::new(new_state)));
     }
     
     fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
         let mut display = self.display.as_ref().clone().unwrap().lock().unwrap();
-        (&self.handlers.event)(&mut display, &mut self.state.clone().unwrap().lock().unwrap(), event.clone());
+        let mut state = self.state.as_ref().clone().unwrap().lock().unwrap();
+
+        state.event(&mut display, event.clone());
 
         match event {
             WindowEvent::CloseRequested
@@ -148,7 +133,7 @@ impl<'a, State> ApplicationHandler for App<'a, State> {
                     display.resize(physical_size);
             }
             WindowEvent::RedrawRequested => {
-                (self.handlers.render)(&mut display, &mut self.state.clone().unwrap().lock().unwrap());
+                state.render(&mut display);
                 display.window.as_ref().request_redraw();
             }
             _ => ()
@@ -157,6 +142,8 @@ impl<'a, State> ApplicationHandler for App<'a, State> {
 
     fn device_event(&mut self, event_loop: &ActiveEventLoop, device_id: winit::event::DeviceId, event: winit::event::DeviceEvent) {
         let mut display = self.display.as_ref().clone().unwrap().lock().unwrap();
-        (self.handlers.device_event)(&mut display, &mut self.state.clone().unwrap().lock().unwrap(), event.clone());
+        let mut state = self.state.as_ref().clone().unwrap().lock().unwrap();
+
+        state.device_event(&mut display, event.clone());
     }
 }

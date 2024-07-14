@@ -1,28 +1,17 @@
-use sursface::{display::Display, wgpu::{self, TextureView}, winit::event::WindowEvent};
-use sursface::{app::AppHandlers, winit::dpi::PhysicalSize};
+use sursface::{app::AppState, display::Display, wgpu::{self, TextureView}, winit::dpi::PhysicalSize};
 
 #[cfg(target_arch = "wasm32")]
 use sursface::wasm_bindgen;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
-    sursface::start::create_window_desktop(PhysicalSize::new(1280, 720),AppHandlers {
-        init,
-        render,
-        event,
-        ..Default::default()
-    });
+    sursface::start::create_window_desktop::<EmptyState>(PhysicalSize::new(1280, 720));
 }
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn start_browser(canvas: sursface::wgpu::web_sys::HtmlCanvasElement) {
-    sursface::start::create_window_browser(canvas, AppHandlers {
-        init,
-        render,
-        event,
-        ..Default::default()
-    });
+    sursface::start::create_window_browser::<EmptyState>(canvas);
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -31,22 +20,24 @@ fn main() {}
 #[derive(Clone)]
 struct EmptyState {}
 
-fn init<'a>(_display: &mut Display) -> EmptyState {
-    EmptyState {}
-}
+impl AppState for EmptyState {
+    fn init<'a>(_display: &mut Display) -> EmptyState {
+        EmptyState {}
+    }
 
-fn render<'a>(display: &mut Display, _state: &mut EmptyState) {
-    let output = display.surface.get_current_texture().unwrap();
-    let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
+    fn render<'a>(&mut self, display: &mut Display) {
+        let output = display.surface.get_current_texture().unwrap();
+        let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
 
-    clear_screen(display, &view, wgpu::Color {
-        r: 100.0 / 255.0,
-        g: 149.0 / 255.0,
-        b: 237.0 / 255.0,
-        a: 1.0,
-    });
+        clear_screen(display, &view, wgpu::Color {
+            r: 100.0 / 255.0,
+            g: 149.0 / 255.0,
+            b: 237.0 / 255.0,
+            a: 1.0,
+        });
 
-    output.present();
+        output.present();
+    }
 }
 
 fn clear_screen<'a>(display: &mut Display, view: &TextureView, color: sursface::wgpu::Color) {
@@ -73,5 +64,3 @@ fn clear_screen<'a>(display: &mut Display, view: &TextureView, color: sursface::
 
     display.queue.submit(std::iter::once(encoder.finish()));
 }
-
-fn event<'a>(_display: &mut Display, _state: &mut EmptyState, _event: WindowEvent) {}
