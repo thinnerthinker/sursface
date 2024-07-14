@@ -14,16 +14,17 @@ use sursface::wgpu::{
     PipelineLayoutDescriptor, RenderPipeline, VertexAttribute, VertexBufferLayout, VertexFormat,
     VertexStepMode,
 };
-use sursface::winit::dpi::{PhysicalPosition, PhysicalSize};
+use sursface::winit::dpi::PhysicalPosition;
 use sursface::winit::event::{ElementState, MouseButton, WindowEvent};
 use sursface::{log, wgpu};
 
-#[cfg(target_arch = "wasm32")]
-use sursface::wasm_bindgen;
-
-#[cfg(not(target_arch = "wasm32"))]
 fn main() {
-    sursface::start::create_window_desktop::<MandelbrotState>(PhysicalSize::new(720, 720));
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        sursface::start::create_window_desktop::<MandelbrotState>(
+            sursface::winit::dpi::PhysicalSize::new(720, 720),
+        );
+    }
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -31,9 +32,6 @@ fn main() {
 pub fn start_browser(canvas: sursface::wgpu::web_sys::HtmlCanvasElement) {
     sursface::start::create_window_browser::<MandelbrotState>(canvas);
 }
-
-#[cfg(target_arch = "wasm32")]
-fn main() {}
 
 #[derive(Clone)]
 enum InteractionState {

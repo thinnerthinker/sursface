@@ -13,25 +13,20 @@ use sursface::wgpu::{
     CommandEncoderDescriptor, PipelineLayoutDescriptor, RenderPipeline, VertexAttribute,
     VertexBufferLayout, VertexFormat, VertexStepMode,
 };
-use sursface::winit::dpi::PhysicalSize;
 use sursface::winit::event::WindowEvent;
 
-#[cfg(target_arch = "wasm32")]
-use sursface::wasm_bindgen;
-
-#[cfg(not(target_arch = "wasm32"))]
 fn main() {
-    sursface::start::create_window_desktop::<CubeState>(PhysicalSize::new(1280, 720));
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        sursface::start::create_window_desktop::<CubeState>(PhysicalSize::new(1280, 720));
+    }
 }
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen::prelude::wasm_bindgen]
-pub fn start_browser(canvas: sursface::web_sys::HtmlCanvasElement) {
+pub fn start_browser(canvas: sursface::wgpu::web_sys::HtmlCanvasElement) {
     sursface::start::create_window_browser::<CubeState>(canvas);
 }
-
-#[cfg(target_arch = "wasm32")]
-fn main() {}
 
 struct CubeState {
     render_pipeline: RenderPipeline,

@@ -1,14 +1,14 @@
 use sursface::app::AppState;
 use sursface::display::Display;
 use sursface::wgpu::{self, TextureView};
-use sursface::winit::dpi::PhysicalSize;
 
-#[cfg(target_arch = "wasm32")]
-use sursface::wasm_bindgen;
-
-#[cfg(not(target_arch = "wasm32"))]
 fn main() {
-    sursface::start::create_window_desktop::<EmptyState>(PhysicalSize::new(1280, 720));
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        sursface::start::create_window_desktop::<EmptyState>(
+            sursface::winit::dpi::PhysicalSize::new(1280, 720),
+        );
+    }
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -16,9 +16,6 @@ fn main() {
 pub fn start_browser(canvas: sursface::wgpu::web_sys::HtmlCanvasElement) {
     sursface::start::create_window_browser::<EmptyState>(canvas);
 }
-
-#[cfg(target_arch = "wasm32")]
-fn main() {}
 
 #[derive(Clone)]
 struct EmptyState {}

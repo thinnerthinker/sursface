@@ -2,15 +2,15 @@ use sursface::app::AppState;
 use sursface::display::Display;
 use sursface::std::{clear_screen, create_render_pipeline, create_shader, get_framebuffer};
 use sursface::wgpu::{self, Color, RenderPipeline};
-use sursface::winit::dpi::PhysicalSize;
 
-#[cfg(not(target_arch = "wasm32"))]
 fn main() {
-    sursface::start::create_window_desktop::<TriangleState>(PhysicalSize::new(1280, 720));
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        sursface::start::create_window_desktop::<TriangleState>(
+            sursface::winit::dpi::PhysicalSize::new(1280, 720),
+        );
+    }
 }
-
-#[cfg(target_arch = "wasm32")]
-fn main() {}
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen::prelude::wasm_bindgen]
