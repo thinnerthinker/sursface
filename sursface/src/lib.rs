@@ -1,4 +1,4 @@
-pub use {cgmath, image, log, wasm_bindgen, web_time, wgpu, winit};
+pub use {cgmath, image, log, web_time, wgpu, winit};
 
 pub mod app;
 pub mod display;
