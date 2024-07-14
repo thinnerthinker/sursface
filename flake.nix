@@ -17,6 +17,9 @@
         targetPlatforms =
           let
             buildFilePatterns = [ ".*/assets/.*" ];
+            toolchainPackages = fenixPkgs: crossFenixPkgs: with fenixPkgs; [
+              rustfmt
+            ];
           in
           [
             {
@@ -24,17 +27,6 @@
               arch = "x86_64-linux";
               depsBuild = with pkgs; [
                 patchelf
-                libxkbcommon
-                wayland
-                xorg.libX11
-                xorg.libXrandr
-                xorg.libXrender
-                xorg.libXcursor
-                xorg.libxcb
-                xorg.libXi
-
-                libGL
-                vulkan-loader
               ];
               postInstall = crateName: ''
                   find $out -type f -exec sh -c '
@@ -44,6 +36,7 @@
                 ' sh {} \;
               '';
               inherit buildFilePatterns;
+              inherit toolchainPackages;
               env = {
                 LD_LIBRARY_PATH = with pkgs; lib.makeLibraryPath [
                   libxkbcommon
@@ -54,7 +47,6 @@
                   xorg.libXcursor
                   xorg.libxcb
                   xorg.libXi
-
                   libGL
                   vulkan-loader
                 ];
@@ -68,6 +60,7 @@
                 mingwW64.windows.pthreads
               ];
               inherit buildFilePatterns;
+              inherit toolchainPackages;
               env = {
                 # fixes issues related to libring
                 TARGET_CC = with pkgs.pkgsCross; "${mingwW64.stdenv.cc}/bin/${mingwW64.stdenv.cc.targetPrefix}cc";
@@ -88,6 +81,7 @@
                 find $out/lib -type f -name "*.wasm" -exec wasm-bindgen {} --out-dir $out/bindgen --web \;
               '';
               inherit buildFilePatterns;
+              inherit toolchainPackages;
               env = {
                 packages = with pkgs; [ wasm-bindgen-cli ];
               };

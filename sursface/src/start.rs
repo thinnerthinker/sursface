@@ -3,15 +3,15 @@ use winit::event_loop::{ControlFlow, EventLoop};
 #[cfg(target_arch = "wasm32")]
 use wgpu::web_sys::HtmlCanvasElement;
 
-use crate::app::App;
-use crate::app::AppState;
+use crate::app::{App, AppState};
 
 #[cfg(target_arch = "wasm32")]
 extern crate console_error_panic_hook;
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn create_window_desktop<State: AppState + 'static>(window_size: winit::dpi::PhysicalSize<u32>)
-{
+pub fn create_window_desktop<State: AppState + 'static>(
+    window_size: winit::dpi::PhysicalSize<u32>,
+) {
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);
 
@@ -20,8 +20,7 @@ pub fn create_window_desktop<State: AppState + 'static>(window_size: winit::dpi:
 }
 
 #[cfg(target_arch = "wasm32")]
-pub fn create_window_browser<State: AppState + 'static>(canvas: HtmlCanvasElement) 
-{
+pub fn create_window_browser<State: AppState + 'static>(canvas: HtmlCanvasElement) {
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);
 

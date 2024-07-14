@@ -1,9 +1,8 @@
 use std::sync::{Arc, Mutex};
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
-use winit::event::{DeviceEvent, ElementState, KeyEvent, WindowEvent};
+use winit::event::{DeviceEvent, WindowEvent};
 use winit::event_loop::ActiveEventLoop;
-use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowId};
 
 #[cfg(target_arch = "wasm32")]
@@ -16,7 +15,7 @@ pub struct App<'a, State: AppState> {
     pub initial_size: PhysicalSize<u32>,
     #[cfg(target_arch = "wasm32")]
     pub canvas: wgpu::web_sys::HtmlCanvasElement,
-    pub state: Option<Arc<Mutex<State>>>
+    pub state: Option<Arc<Mutex<State>>>,
 }
 
 pub trait AppState {
@@ -26,14 +25,13 @@ pub trait AppState {
     }
 
     fn draw(&mut self, display: &mut Display);
-    
+
     fn event(&mut self, display: &mut Display, event: WindowEvent) {}
     fn device_event(&mut self, display: &mut Display, event: DeviceEvent) {}
 }
 
-
 fn init_logger() {
-    #[cfg(target_arch = "wasm32")] 
+    #[cfg(target_arch = "wasm32")]
     {
         // We keep wgpu at Error level, as it's very noisy.
         let base_level = log::LevelFilter::Info;
@@ -54,7 +52,7 @@ fn init_logger() {
     {
         let base_level = log::LevelFilter::Info;
         let wgpu_level = log::LevelFilter::Error;
-        
+
         // parse_default_env will read the RUST_LOG environment variable and apply it on top
         // of these default filters.
         env_logger::builder()
@@ -64,13 +62,12 @@ fn init_logger() {
             .filter_module("naga", wgpu_level)
             .parse_default_env()
             .init();
-    }    
+    }
 }
 
 impl<'a, State: AppState> App<'a, State> {
     #[cfg(not(target_arch = "wasm32"))]
-    pub fn from_window_size(size: PhysicalSize<u32>) -> Self
-    {
+    pub fn from_window_size(size: PhysicalSize<u32>) -> Self {
         log::debug!("Setting window size");
         App {
             initial_size: size,
@@ -80,14 +77,13 @@ impl<'a, State: AppState> App<'a, State> {
     }
 
     #[cfg(target_arch = "wasm32")]
-    pub fn from_canvas(canvas: wgpu::web_sys::HtmlCanvasElement) -> Self
-    {
+    pub fn from_canvas(canvas: wgpu::web_sys::HtmlCanvasElement) -> Self {
         log::debug!("Setting canvas size");
         App {
             initial_size: PhysicalSize::new(canvas.width(), canvas.height()),
             canvas,
             display: None,
-            state: None
+            state: None,
         }
     }
 }
@@ -95,20 +91,24 @@ impl<'a, State: AppState> App<'a, State> {
 impl<'a, State: AppState> ApplicationHandler for App<'a, State> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         init_logger();
-        
+
         #[cfg(not(target_arch = "wasm32"))]
         {
-            self.display = Some(Arc::new(Mutex::new(Display::from_window(Display::create_window_from_size(event_loop, self.initial_size)))));
+            self.display = Some(Arc::new(Mutex::new(Display::from_window(
+                Display::create_window_from_size(event_loop, self.initial_size),
+            ))));
         }
         #[cfg(target_arch = "wasm32")]
         {
-            self.display = Some(Arc::new(Mutex::new(Display::from_window(Display::create_window_from_canvas(event_loop, self.canvas.clone())))));
+            self.display = Some(Arc::new(Mutex::new(Display::from_window(
+                Display::create_window_from_canvas(event_loop, self.canvas.clone()),
+            ))));
         }
 
         let new_state = State::new(&mut self.display.clone().unwrap().lock().unwrap());
         self.state = Some(Arc::new(Mutex::new(new_state)));
     }
-    
+
     fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
         let mut display = self.display.as_ref().clone().unwrap().lock().unwrap();
         let mut state = self.state.as_ref().clone().unwrap().lock().unwrap();
@@ -121,17 +121,22 @@ impl<'a, State: AppState> ApplicationHandler for App<'a, State> {
             }
             WindowEvent::Resized(physical_size) => {
                 log::debug!("Window resized: {:?}", physical_size);
-                    display.resize(physical_size);
+                display.resize(physical_size);
             }
             WindowEvent::RedrawRequested => {
                 state.draw(&mut display);
                 display.window.as_ref().request_redraw();
             }
-            _ => ()
+            _ => (),
         };
     }
 
-    fn device_event(&mut self, event_loop: &ActiveEventLoop, device_id: winit::event::DeviceId, event: winit::event::DeviceEvent) {
+    fn device_event(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+        device_id: winit::event::DeviceId,
+        event: winit::event::DeviceEvent,
+    ) {
         let mut display = self.display.as_ref().clone().unwrap().lock().unwrap();
         let mut state = self.state.as_ref().clone().unwrap().lock().unwrap();
 

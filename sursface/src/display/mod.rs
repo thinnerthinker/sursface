@@ -1,10 +1,8 @@
 use std::sync::Arc;
 
-use winit::{
-    event_loop::ActiveEventLoop, 
-    window::{Window, WindowAttributes},
-    dpi::PhysicalSize
-};
+use winit::dpi::PhysicalSize;
+use winit::event_loop::ActiveEventLoop;
+use winit::window::{Window, WindowAttributes};
 
 #[cfg(target_arch = "wasm32")]
 use winit::platform::web::WindowAttributesExtWebSys;
@@ -19,20 +17,24 @@ pub struct Display<'a> {
 }
 
 impl<'a> Display<'a> {
-    pub fn create_window_from_size(event_loop: &ActiveEventLoop, window_size: PhysicalSize<u32>) -> Window {
+    pub fn create_window_from_size(
+        event_loop: &ActiveEventLoop,
+        window_size: PhysicalSize<u32>,
+    ) -> Window {
         let window = event_loop
-            .create_window(WindowAttributes::default()
-                .with_inner_size(window_size))
+            .create_window(WindowAttributes::default().with_inner_size(window_size))
             .expect("Couldn't create window");
 
         window
     }
 
     #[cfg(target_arch = "wasm32")]
-    pub fn create_window_from_canvas(event_loop: &ActiveEventLoop, canvas: wgpu::web_sys::HtmlCanvasElement) -> Window {
+    pub fn create_window_from_canvas(
+        event_loop: &ActiveEventLoop,
+        canvas: wgpu::web_sys::HtmlCanvasElement,
+    ) -> Window {
         let window = event_loop
-            .create_window(WindowAttributes::default()
-                .with_canvas(Some(canvas)))
+            .create_window(WindowAttributes::default().with_canvas(Some(canvas)))
             .expect("Couldn't create window");
 
         window
@@ -52,7 +54,7 @@ impl<'a> Display<'a> {
             .create_surface(Arc::clone(&window))
             .expect("Couldn't create surface");
 
-         let (adapter, device, queue) = pollster::block_on(async {
+        let (adapter, device, queue) = pollster::block_on(async {
             let adapter = instance
                 .request_adapter(&wgpu::RequestAdapterOptions {
                     power_preference: wgpu::PowerPreference::default(),

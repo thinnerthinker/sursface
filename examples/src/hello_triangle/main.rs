@@ -1,4 +1,8 @@
-use sursface::{app::AppState, display::Display, std::{clear_screen, create_render_pipeline, create_shader, get_framebuffer}, wgpu::{self, Color, RenderPipeline}, winit::dpi::PhysicalSize};
+use sursface::app::AppState;
+use sursface::display::Display;
+use sursface::std::{clear_screen, create_render_pipeline, create_shader, get_framebuffer};
+use sursface::wgpu::{self, Color, RenderPipeline};
+use sursface::winit::dpi::PhysicalSize;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
@@ -7,7 +11,6 @@ fn main() {
 
 #[cfg(target_arch = "wasm32")]
 fn main() {}
-
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen::prelude::wasm_bindgen]
@@ -30,7 +33,7 @@ impl AppState for TriangleState {
             bind_group_layouts: &[],
             push_constant_ranges: &[],
         });
-        
+
         let render_pipeline = create_render_pipeline(display, pipeline_layout, shader, &[]);
         TriangleState { render_pipeline }
     }
@@ -52,7 +55,7 @@ impl AppState for TriangleState {
         let (output, view) = get_framebuffer(&display.surface);
         {
             let mut rpass = clear_screen(&view, &mut encoder, clear_color);
-        
+
             rpass.set_pipeline(&self.render_pipeline);
             rpass.draw(0..3, 0..1);
         }

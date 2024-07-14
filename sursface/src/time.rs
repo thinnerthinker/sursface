@@ -5,5 +5,7 @@ lazy_static! {
 }
 
 pub fn now_secs() -> f32 {
-    web_time::Instant::now().duration_since(*START_TIME).as_secs_f64() as f32
+    web_time::Instant::now()
+        .duration_since(*START_TIME)
+        .as_secs_f64() as f32
 }

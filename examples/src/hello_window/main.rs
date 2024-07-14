@@ -1,4 +1,7 @@
-use sursface::{app::AppState, display::Display, wgpu::{self, TextureView}, winit::dpi::PhysicalSize};
+use sursface::app::AppState;
+use sursface::display::Display;
+use sursface::wgpu::{self, TextureView};
+use sursface::winit::dpi::PhysicalSize;
 
 #[cfg(target_arch = "wasm32")]
 use sursface::wasm_bindgen;
@@ -27,23 +30,31 @@ impl AppState for EmptyState {
 
     fn draw<'a>(&mut self, display: &mut Display) {
         let output = display.surface.get_current_texture().unwrap();
-        let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let view = output
+            .texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
 
-        clear_screen(display, &view, wgpu::Color {
-            r: 100.0 / 255.0,
-            g: 149.0 / 255.0,
-            b: 237.0 / 255.0,
-            a: 1.0,
-        });
+        clear_screen(
+            display,
+            &view,
+            wgpu::Color {
+                r: 100.0 / 255.0,
+                g: 149.0 / 255.0,
+                b: 237.0 / 255.0,
+                a: 1.0,
+            },
+        );
 
         output.present();
     }
 }
 
 fn clear_screen<'a>(display: &mut Display, view: &TextureView, color: sursface::wgpu::Color) {
-    let mut encoder = display.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-        label: Some("Clear Screen Encoder"),
-    });
+    let mut encoder = display
+        .device
+        .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("Clear Screen Encoder"),
+        });
 
     {
         let _render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
