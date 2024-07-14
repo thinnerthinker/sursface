@@ -21,9 +21,7 @@ use sursface::{log, wgpu};
 fn main() {
     #[cfg(not(target_arch = "wasm32"))]
     {
-        sursface::start::create_window_desktop::<MandelbrotState>(
-            sursface::winit::dpi::PhysicalSize::new(720, 720),
-        );
+        sursface::start::create_window_desktop::<MandelbrotState>(720, 720);
     }
 }
 
@@ -185,11 +183,17 @@ impl AppState for MandelbrotState {
     }
 
     fn draw(&mut self, display: &mut Display) {
-        let mut dt = now_secs() - self.last_timestep;
-        #[cfg(target_arch = "wasm32")]
-        {
-            dt *= -1000f32;
-        }
+        let dt = {
+            let mut dt = 0f32;
+            dt += now_secs() - self.last_timestep;
+
+            #[cfg(target_arch = "wasm32")]
+            {
+                dt *= -1000f32; // hack
+            }
+
+            dt
+        };
 
         self.last_timestep = now_secs();
         self.uniforms.aspect_ratio = display.config.width as f32 / display.config.height as f32;

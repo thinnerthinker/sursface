@@ -10,12 +10,12 @@ extern crate console_error_panic_hook;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn create_window_desktop<State: AppState + 'static>(
-    window_size: winit::dpi::PhysicalSize<u32>,
+    width: u32, height: u32,
 ) {
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);
 
-    let mut app = App::<State>::from_window_size(window_size);
+    let mut app = App::<State>::from_window_size(width, height);
     event_loop.run_app(&mut app).unwrap();
 }
 

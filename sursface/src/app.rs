@@ -12,6 +12,7 @@ use super::display::Display;
 
 pub(crate) struct App<'a, State: AppState> {
     pub display: Option<Arc<Mutex<Display<'a>>>>,
+    #[cfg(not(target_arch = "wasm32"))]
     pub initial_size: PhysicalSize<u32>,
     #[cfg(target_arch = "wasm32")]
     pub canvas: wgpu::web_sys::HtmlCanvasElement,
@@ -26,18 +27,20 @@ pub trait AppState {
 
     fn draw(&mut self, display: &mut Display);
 
-    fn event(&mut self, display: &mut Display, event: WindowEvent) {}
-    fn device_event(&mut self, display: &mut Display, event: DeviceEvent) {}
+    fn event(&mut self, display: &mut Display, event: WindowEvent) {
+        let (_, _) = (event, display); // suppress warning
+    }
+    fn device_event(&mut self, display: &mut Display, event: DeviceEvent) {
+        let (_, _) = (event, display); // suppress warning
+    }
 }
 
 fn init_logger() {
     #[cfg(target_arch = "wasm32")]
     {
-        // We keep wgpu at Error level, as it's very noisy.
         let base_level = log::LevelFilter::Info;
         let wgpu_level = log::LevelFilter::Error;
 
-        // On web, we use fern, as console_log doesn't have filtering on a per-module level.
         fern::Dispatch::new()
             .level(base_level)
             .level_for("wgpu_core", wgpu_level)
@@ -54,7 +57,7 @@ fn init_logger() {
         let wgpu_level = log::LevelFilter::Error;
 
         // parse_default_env will read the RUST_LOG environment variable and apply it on top
-        // of these default filters.
+        // of these default filters
         env_logger::builder()
             .filter_level(base_level)
             .filter_module("wgpu_core", wgpu_level)
@@ -67,10 +70,10 @@ fn init_logger() {
 
 impl<'a, State: AppState> App<'a, State> {
     #[cfg(not(target_arch = "wasm32"))]
-    pub fn from_window_size(size: PhysicalSize<u32>) -> Self {
+    pub fn from_window_size(width: u32, height: u32) -> Self {
         log::debug!("Setting window size");
         App {
-            initial_size: size,
+            initial_size: winit::dpi::PhysicalSize::new(width, height),
             display: None,
             state: None,
         }
@@ -80,7 +83,6 @@ impl<'a, State: AppState> App<'a, State> {
     pub fn from_canvas(canvas: wgpu::web_sys::HtmlCanvasElement) -> Self {
         log::debug!("Setting canvas size");
         App {
-            initial_size: PhysicalSize::new(canvas.width(), canvas.height()),
             canvas,
             display: None,
             state: None,
@@ -133,8 +135,8 @@ impl<'a, State: AppState> ApplicationHandler for App<'a, State> {
 
     fn device_event(
         &mut self,
-        event_loop: &ActiveEventLoop,
-        device_id: winit::event::DeviceId,
+        _event_loop: &ActiveEventLoop,
+        _device_id: winit::event::DeviceId,
         event: winit::event::DeviceEvent,
     ) {
         let mut display = self.display.as_ref().clone().unwrap().lock().unwrap();

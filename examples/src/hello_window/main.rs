@@ -5,9 +5,7 @@ use sursface::wgpu::{self, TextureView};
 fn main() {
     #[cfg(not(target_arch = "wasm32"))]
     {
-        sursface::start::create_window_desktop::<EmptyState>(
-            sursface::winit::dpi::PhysicalSize::new(1280, 720),
-        );
+        sursface::start::create_window_desktop::<EmptyState>(1280, 720);
     }
 }
 

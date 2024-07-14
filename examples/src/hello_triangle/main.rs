@@ -6,9 +6,7 @@ use sursface::wgpu::{self, Color, RenderPipeline};
 fn main() {
     #[cfg(not(target_arch = "wasm32"))]
     {
-        sursface::start::create_window_desktop::<TriangleState>(
-            sursface::winit::dpi::PhysicalSize::new(1280, 720),
-        );
+        sursface::start::create_window_desktop::<TriangleState>(1280, 720);
     }
 }
 

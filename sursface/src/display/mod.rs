@@ -17,7 +17,7 @@ pub struct Display<'a> {
 }
 
 impl<'a> Display<'a> {
-    pub fn create_window_from_size(
+    pub(crate) fn create_window_from_size(
         event_loop: &ActiveEventLoop,
         window_size: PhysicalSize<u32>,
     ) -> Window {
@@ -29,7 +29,7 @@ impl<'a> Display<'a> {
     }
 
     #[cfg(target_arch = "wasm32")]
-    pub fn create_window_from_canvas(
+    pub(crate) fn create_window_from_canvas(
         event_loop: &ActiveEventLoop,
         canvas: wgpu::web_sys::HtmlCanvasElement,
     ) -> Window {

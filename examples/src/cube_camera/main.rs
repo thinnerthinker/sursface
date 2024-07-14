@@ -18,7 +18,7 @@ use sursface::winit::event::WindowEvent;
 fn main() {
     #[cfg(not(target_arch = "wasm32"))]
     {
-        sursface::start::create_window_desktop::<CubeState>(PhysicalSize::new(1280, 720));
+        sursface::start::create_window_desktop::<CubeState>(1280, 720);
     }
 }
 
