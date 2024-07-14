@@ -101,7 +101,7 @@ pub const fn quad_no_normal(
     ]
 }
 
-pub const fn cube(uvs: &[[[f32; 2]; 4]]) -> [VertexPositionNormalUv; 36] {  
+pub const fn cube(uvs: &[[[f32; 2]; 4]; 6]) -> [VertexPositionNormalUv; 36] {  
     let front = quad(
         [-1.0, -1.0,  1.0],
         [ 1.0, -1.0,  1.0],
