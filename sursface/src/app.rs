@@ -10,7 +10,7 @@ extern crate console_error_panic_hook;
 
 use super::display::Display;
 
-pub struct App<'a, State: AppState> {
+pub(crate) struct App<'a, State: AppState> {
     pub display: Option<Arc<Mutex<Display<'a>>>>,
     pub initial_size: PhysicalSize<u32>,
     #[cfg(target_arch = "wasm32")]
