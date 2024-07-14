@@ -25,7 +25,7 @@ pub fn clear_screen<'a>(
     color: Color,
 ) -> RenderPass<'a> {
     let rpass_descriptor = wgpu::RenderPassDescriptor {
-        label: Some("Render Pass"),
+        label: None,
         color_attachments: &[Some(wgpu::RenderPassColorAttachment {
             view: framebuffer_view,
             resolve_target: None,
@@ -106,7 +106,7 @@ pub fn create_texture_layout_entry_from_image(
     };
 
     let texture = device.create_texture(&wgpu::TextureDescriptor {
-        label: Some("Texture"),
+        label: None,
         size: texture_extent,
         mip_level_count: 1,
         sample_count: 1,
@@ -193,12 +193,12 @@ pub fn create_texture(
 ) -> (BindGroupLayout, BindGroup) {
     let texture_bind_group_layout =
         device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: Some("Texture Bind Group Layout"),
+            label: None,
             entries: layout_entries,
         });
 
     let texture_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-        label: Some("Texture Bind Group"),
+        label: None,
         layout: &texture_bind_group_layout,
         entries,
     });
@@ -215,19 +215,19 @@ where
     M: bytemuck::Pod,
 {
     let uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-        label: Some("Uniform Buffer"),
+        label: None,
         contents: bytemuck::cast_slice(&[uniform_model]),
         usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
     });
 
     let uniform_bind_group_layout =
         device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: Some("Uniform Bind Group Layout"),
+            label: None,
             entries: &[create_uniform_entry(binding_index)],
         });
 
     let uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-        label: Some("Uniform Bind Group"),
+        label: None,
         layout: &uniform_bind_group_layout,
         entries: &[wgpu::BindGroupEntry {
             binding: binding_index,

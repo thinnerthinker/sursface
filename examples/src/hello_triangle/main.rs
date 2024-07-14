@@ -47,7 +47,7 @@ impl AppState for TriangleState {
         let device = &display.device;
 
         let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("Encoder"),
+            label: None,
         });
 
         let (output, view) = get_framebuffer(&display.surface);

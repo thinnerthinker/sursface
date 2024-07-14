@@ -122,7 +122,7 @@ impl AppState for CubeState {
         let start_time = now_secs();
 
         let vertex_buffer = device.create_buffer_init(&BufferInitDescriptor {
-            label: Some("Vertex Buffer"),
+            label: None,
             contents: bytemuck::cast_slice(&cube(&[
                 quad_uvs((0.00, 1f32 / 3f32), (0.25 + 0.00, 2f32 / 3f32)), // 6
                 quad_uvs((0.50, 1f32 / 3f32), (0.25 + 0.50, 2f32 / 3f32)), // 1
@@ -163,7 +163,7 @@ impl AppState for CubeState {
             let mut encoder = display
                 .device
                 .create_command_encoder(&CommandEncoderDescriptor {
-                    label: Some("Encoder"),
+                    label: None,
                 });
 
             let (output, view) = get_framebuffer(&display.surface);

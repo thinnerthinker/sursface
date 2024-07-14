@@ -148,7 +148,7 @@ impl AppState for MandelbrotState {
         let quad_uvs = quad_uvs((0.0, 0.0), (1.0, 1.0));
 
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Vertex Buffer"),
+            label: None,
             contents: bytemuck::cast_slice(&quad_no_normal(
                 [-1.0, -1.0, 1.0],
                 [1.0, -1.0, 1.0],
@@ -239,7 +239,7 @@ impl AppState for MandelbrotState {
             let mut encoder = display
                 .device
                 .create_command_encoder(&CommandEncoderDescriptor {
-                    label: Some("Encoder"),
+                    label: None,
                 });
 
             let (output, view) = get_framebuffer(&display.surface);

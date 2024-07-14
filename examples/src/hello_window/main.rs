@@ -48,12 +48,12 @@ fn clear_screen<'a>(display: &mut Display, view: &TextureView, color: sursface::
     let mut encoder = display
         .device
         .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("Clear Screen Encoder"),
+            label: None,
         });
 
     {
         let _render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-            label: Some("Render Pass"),
+            label: None,
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                 view: &view,
                 resolve_target: None,
