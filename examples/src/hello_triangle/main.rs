@@ -20,7 +20,7 @@ struct TriangleState {
 }
 
 impl AppState for TriangleState {
-    fn init(display: &mut Display) -> TriangleState {
+    fn new(display: &mut Display) -> TriangleState {
         let device = &display.device;
 
         let shader = create_shader(device, include_str!("assets/shader.wgsl"));
@@ -35,7 +35,7 @@ impl AppState for TriangleState {
         TriangleState { render_pipeline }
     }
 
-    fn render(&mut self, display: &mut Display) {
+    fn draw(&mut self, display: &mut Display) {
         let clear_color = Color {
             r: 100.0 / 255.0,
             g: 149.0 / 255.0,

@@ -21,11 +21,11 @@ fn main() {}
 struct EmptyState {}
 
 impl AppState for EmptyState {
-    fn init<'a>(_display: &mut Display) -> EmptyState {
+    fn new<'a>(_display: &mut Display) -> EmptyState {
         EmptyState {}
     }
 
-    fn render<'a>(&mut self, display: &mut Display) {
+    fn draw<'a>(&mut self, display: &mut Display) {
         let output = display.surface.get_current_texture().unwrap();
         let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
 

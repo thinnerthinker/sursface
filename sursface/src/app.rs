@@ -20,12 +20,12 @@ pub struct App<'a, State: AppState> {
 }
 
 pub trait AppState {
-    fn init(display: &mut Display) -> Self;
+    fn new(display: &mut Display) -> Self;
     fn create_display(window: Window) -> Display<'static> {
         Display::from_window(window)
     }
 
-    fn render(&mut self, display: &mut Display);
+    fn draw(&mut self, display: &mut Display);
     
     fn event(&mut self, display: &mut Display, event: WindowEvent) {}
     fn device_event(&mut self, display: &mut Display, event: DeviceEvent) {}
@@ -105,7 +105,7 @@ impl<'a, State: AppState> ApplicationHandler for App<'a, State> {
             self.display = Some(Arc::new(Mutex::new(Display::from_window(Display::create_window_from_canvas(event_loop, self.canvas.clone())))));
         }
 
-        let new_state = State::init(&mut self.display.clone().unwrap().lock().unwrap());
+        let new_state = State::new(&mut self.display.clone().unwrap().lock().unwrap());
         self.state = Some(Arc::new(Mutex::new(new_state)));
     }
     
@@ -133,7 +133,7 @@ impl<'a, State: AppState> ApplicationHandler for App<'a, State> {
                     display.resize(physical_size);
             }
             WindowEvent::RedrawRequested => {
-                state.render(&mut display);
+                state.draw(&mut display);
                 display.window.as_ref().request_redraw();
             }
             _ => ()

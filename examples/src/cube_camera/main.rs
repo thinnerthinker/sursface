@@ -49,7 +49,7 @@ pub struct Uniforms {
 }
 
 impl AppState for CubeState {
-    fn init(display: &mut Display) -> CubeState {
+    fn new(display: &mut Display) -> CubeState {
         let device = &display.device;
 
         let shader = create_shader(device, include_str!("assets/shader.wgsl"));
@@ -130,7 +130,7 @@ impl AppState for CubeState {
         }
     }
 
-    fn render(&mut self, display: &mut Display) {
+    fn draw(&mut self, display: &mut Display) {
         let clear_color = Color {
             r: 252.0 / 255.0,
             g: 241.0 / 255.0,

@@ -80,7 +80,7 @@ pub struct Uniforms {
 }
 
 impl AppState for MandelbrotState {
-    fn init(display: &mut Display) -> MandelbrotState {
+    fn new(display: &mut Display) -> MandelbrotState {
         let device = &display.device;
         let aspect_ratio = display.config.width as f32 / display.config.height as f32;
     
@@ -163,7 +163,7 @@ impl AppState for MandelbrotState {
     }
     
     
-    fn render(&mut self, display: &mut Display) {
+    fn draw(&mut self, display: &mut Display) {
         let mut dt = now_secs() - self.last_timestep;
         #[cfg(target_arch = "wasm32")] {
             dt *= -1000f32;
