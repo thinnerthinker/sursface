@@ -29,7 +29,7 @@ impl AppState for EmptyState {
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
 
-        clear_screen(
+        clear(
             display,
             &view,
             wgpu::Color {
@@ -44,7 +44,7 @@ impl AppState for EmptyState {
     }
 }
 
-fn clear_screen<'a>(display: &mut Display, view: &TextureView, color: sursface::wgpu::Color) {
+fn clear<'a>(display: &mut Display, view: &TextureView, color: sursface::wgpu::Color) {
     let mut encoder = display
         .device
         .create_command_encoder(&wgpu::CommandEncoderDescriptor {

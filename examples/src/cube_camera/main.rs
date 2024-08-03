@@ -3,7 +3,7 @@ use sursface::cgmath::{perspective, Deg, Matrix4, Point3, SquareMatrix, Vector3}
 use sursface::display::Display;
 use sursface::std::models::{cube, quad_uvs, VertexPositionNormalUv};
 use sursface::std::{
-    clear_screen, create_render_pipeline, create_sampler_entry, create_shader, create_texture,
+    clear, create_render_pipeline, create_sampler_entry, create_shader, create_texture,
     create_texture_layout_entry_from_image, create_uniforms, get_framebuffer,
 };
 use sursface::time::now_secs;
@@ -168,7 +168,7 @@ impl AppState for CubeState {
 
             let (output, view) = get_framebuffer(&display.surface);
             {
-                let mut rpass = clear_screen(&view, &mut encoder, clear_color);
+                let mut rpass = clear(&view, &mut encoder, clear_color);
 
                 let now = now_secs();
                 let elapsed = now - self.start_time;

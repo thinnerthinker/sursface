@@ -5,7 +5,7 @@ use sursface::cgmath::{Vector2, Zero};
 use sursface::display::Display;
 use sursface::std::models::{quad_no_normal, quad_uvs, VertexPositionUv};
 use sursface::std::{
-    clear_screen, create_render_pipeline, create_shader, create_uniforms, get_framebuffer,
+    clear, create_render_pipeline, create_shader, create_uniforms, get_framebuffer,
 };
 use sursface::time::now_secs;
 use sursface::wgpu::util::DeviceExt;
@@ -245,7 +245,7 @@ impl AppState for MandelbrotState {
             let (output, view) = get_framebuffer(&display.surface);
 
             {
-                let mut rpass = clear_screen(&view, &mut encoder, clear_color);
+                let mut rpass = clear(&view, &mut encoder, clear_color);
 
                 self.uniforms.cursor_pos = [
                     self.cursor_location.x / display.config.width as f32,

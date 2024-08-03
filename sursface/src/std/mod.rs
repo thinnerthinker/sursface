@@ -19,15 +19,15 @@ pub fn get_framebuffer(surface: &Surface) -> (SurfaceTexture, TextureView) {
     (output, view)
 }
 
-pub fn clear_screen<'a>(
-    framebuffer_view: &'a TextureView,
+pub fn clear<'a>(
+    view: &'a TextureView,
     encoder: &'a mut CommandEncoder,
     color: Color,
 ) -> RenderPass<'a> {
     let rpass_descriptor = wgpu::RenderPassDescriptor {
         label: None,
         color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-            view: framebuffer_view,
+            view,
             resolve_target: None,
             ops: wgpu::Operations {
                 load: wgpu::LoadOp::Clear(color),
@@ -146,6 +146,44 @@ pub fn create_texture_layout_entry_from_image(
     };
 
     (entry, texture_view)
+}
+
+pub fn create_render_texture(
+    device: &Device,
+    width: u32,
+    height: u32,
+    format: wgpu::TextureFormat,
+    binding_index: u32,
+) -> (BindGroupLayoutEntry, TextureView) {
+    let texture = device.create_texture(&wgpu::TextureDescriptor {
+        label: Some("Render Texture"),
+        size: wgpu::Extent3d {
+            width,
+            height,
+            depth_or_array_layers: 1,
+        },
+        mip_level_count: 1,
+        sample_count: 1,
+        dimension: wgpu::TextureDimension::D2,
+        format,
+        usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
+        view_formats: &[],
+    });
+
+    let texture_view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+
+    let layout_entry = wgpu::BindGroupLayoutEntry {
+        binding: binding_index,
+        visibility: wgpu::ShaderStages::FRAGMENT,
+        ty: wgpu::BindingType::Texture {
+            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+            view_dimension: wgpu::TextureViewDimension::D2,
+            multisampled: false,
+        },
+        count: None,
+    };
+
+    (layout_entry, texture_view)
 }
 
 pub fn create_sampler_entry(

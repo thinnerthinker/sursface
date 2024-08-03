@@ -1,6 +1,6 @@
 use sursface::app::AppState;
 use sursface::display::Display;
-use sursface::std::{clear_screen, create_render_pipeline, create_shader, get_framebuffer};
+use sursface::std::{clear, create_render_pipeline, create_shader, get_framebuffer};
 use sursface::wgpu::{self, Color, RenderPipeline};
 
 fn main() {
@@ -52,7 +52,7 @@ impl AppState for TriangleState {
 
         let (output, view) = get_framebuffer(&display.surface);
         {
-            let mut rpass = clear_screen(&view, &mut encoder, clear_color);
+            let mut rpass = clear(&view, &mut encoder, clear_color);
 
             rpass.set_pipeline(&self.render_pipeline);
             rpass.draw(0..3, 0..1);
