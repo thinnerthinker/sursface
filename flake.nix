@@ -18,7 +18,8 @@
           let
             buildFilePatterns = [ ".*/assets/.*" ];
             toolchainPackages = fenixPkgs: crossFenixPkgs: with fenixPkgs; [
-              rustfmt
+              latest.rustfmt
+              stable.rust-src
             ];
           in
           [
